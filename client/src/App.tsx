@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import CreateServiceCenter from "./pages/ServiceCenters/Create";
+import ServiceCenterList from "./pages/ServiceCenters/List";
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
 
                     <Route element={<ProtectedRoute />}>
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/service-centers" element={<ServiceCenterList />} />
                         <Route path="/create-service-center" element={<CreateServiceCenter />} />
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     </Route>

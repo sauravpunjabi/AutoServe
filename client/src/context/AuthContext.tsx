@@ -10,6 +10,8 @@ import { jwtDecode } from "jwt-decode";
 
 interface User {
     id: string;
+    full_name: string;
+    email: string;
     role: "customer" | "mechanic" | "manager" | "admin";
 }
 
