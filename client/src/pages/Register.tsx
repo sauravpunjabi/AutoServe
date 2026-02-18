@@ -21,7 +21,7 @@ const Register = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await api.post("/register", formData);
+            const response = await api.post("/auth/register", formData);
             login(response.data.token);
             navigate("/dashboard");
         } catch (err: any) {

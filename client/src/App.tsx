@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import CreateServiceCenter from "./pages/ServiceCenters/Create";
 
 function App() {
     return (
@@ -15,6 +16,7 @@ function App() {
 
                     <Route element={<ProtectedRoute />}>
                         <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/create-service-center" element={<CreateServiceCenter />} />
                         <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     </Route>
 

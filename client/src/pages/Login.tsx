@@ -13,7 +13,7 @@ const Login = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await api.post("/login", { email, password });
+            const response = await api.post("/auth/login", { email, password });
             login(response.data.token);
             navigate("/dashboard"); // Redirect to dashboard after login
         } catch (err: any) {

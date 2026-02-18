@@ -9,6 +9,7 @@ app.use(cors());
 
 // Routes
 app.use("/api/auth", require("./routes/auth"));
+app.use("/api/service-centers", require("./routes/serviceCenters"));
 
 const PORT = process.env.PORT || 5000;
 
