@@ -1,0 +1,1 @@
+export default function ManagerBookingDetail() { return <div className="p-8"><h1 className="text-2xl font-bold">ManagerBookingDetail</h1></div>; }

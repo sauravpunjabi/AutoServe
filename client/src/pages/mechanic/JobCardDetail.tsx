@@ -1,0 +1,1 @@
+export default function MechanicJobCardDetail() { return <div className="p-8"><h1 className="text-2xl font-bold">MechanicJobCardDetail</h1></div>; }

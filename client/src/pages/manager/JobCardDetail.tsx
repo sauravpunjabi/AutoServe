@@ -1,0 +1,1 @@
+export default function ManagerJobCardDetail() { return <div className="p-8"><h1 className="text-2xl font-bold">ManagerJobCardDetail</h1></div>; }

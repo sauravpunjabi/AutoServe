@@ -1,0 +1,1 @@
+export default function ManagerInventory() { return <div className="p-8"><h1 className="text-2xl font-bold">ManagerInventory</h1></div>; }

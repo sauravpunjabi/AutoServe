@@ -1,0 +1,1 @@
+export default function ManagerReviews() { return <div className="p-8"><h1 className="text-2xl font-bold">ManagerReviews</h1></div>; }

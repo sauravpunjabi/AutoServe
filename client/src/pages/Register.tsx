@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 
 const Register = () => {
     const [formData, setFormData] = useState({
-        full_name: "",
+        name: "",
         email: "",
         password: "",
         role: "customer", // Default role
@@ -23,9 +23,9 @@ const Register = () => {
         try {
             const response = await api.post("/auth/register", formData);
             login(response.data.token);
-            navigate("/dashboard");
+            navigate(`/${response.data.user.role}/dashboard`);
         } catch (err: any) {
-            setError(err.response?.data || "Registration failed");
+            setError(err.response?.data?.message || err.response?.data || "Registration failed");
         }
     };
 
@@ -45,9 +45,9 @@ const Register = () => {
                         <label className="mb-2 block font-medium text-gray-700">Full Name</label>
                         <input
                             type="text"
-                            name="full_name"
+                            name="name"
                             className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
-                            value={formData.full_name}
+                            value={formData.name}
                             onChange={handleChange}
                             required
                         />
