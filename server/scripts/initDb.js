@@ -37,8 +37,11 @@ async function initDb() {
         const schemaPath = path.join(__dirname, "../db/database.sql");
         const schema = fs.readFileSync(schemaPath, "utf8");
 
-        // Remove "CREATE DATABASE" line if present since we already handled it or are connected to it
+        // Remove "CREATE DATABASE" line if present
         const schemaQueries = schema.replace(/CREATE DATABASE autoserve;/i, "");
+
+        console.log("Dropping all existing tables to reset schema...");
+        await pool.query("DROP SCHEMA public CASCADE; CREATE SCHEMA public;");
 
         console.log("Running schema migration...");
         await pool.query(schemaQueries);

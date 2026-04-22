@@ -1,11 +1,14 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
-function jwtGenerator(user_id, role) {
+function jwtGenerator(user) {
     const payload = {
         user: {
-            id: user_id,
-            role: role
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status
         },
     };
 
