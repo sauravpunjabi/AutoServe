@@ -53,4 +53,45 @@ router.get("/admin/users", authorize, async (req, res) => {
   }
 });
 
+router.get("/admin/analytics", authorize, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json("Access Denied");
+    
+    // Total users, bookings, revenue
+    const usersCount = await pool.query("SELECT COUNT(*) FROM users");
+    const bookingsCount = await pool.query("SELECT COUNT(*) FROM service_bookings");
+    const revenue = await pool.query("SELECT SUM(total_cost) as total FROM invoices");
+    
+    // Revenue per service center (mocked structure if not fully JOINed)
+    const revenuePerCenter = await pool.query(`
+      SELECT sc.name, COALESCE(SUM(i.total_cost), 0) as total_revenue
+      FROM service_centers sc
+      LEFT JOIN service_bookings sb ON sc.id = sb.service_center_id
+      LEFT JOIN job_cards jc ON sb.id = jc.booking_id
+      LEFT JOIN invoices i ON jc.id = i.job_card_id
+      GROUP BY sc.name
+    `);
+
+    // Bookings over time (by month)
+    const bookingsOverTime = await pool.query(`
+      SELECT TO_CHAR(booking_date, 'Mon') as name, COUNT(*) as bookings
+      FROM service_bookings
+      GROUP BY TO_CHAR(booking_date, 'Mon')
+    `);
+
+    res.json({
+      stats: {
+        users: parseInt(usersCount.rows[0].count),
+        bookings: parseInt(bookingsCount.rows[0].count),
+        revenue: revenue.rows[0].total || 0
+      },
+      revenuePerCenter: revenuePerCenter.rows.map(r => ({ name: r.name, revenue: Number(r.total_revenue) })),
+      bookingsOverTime: bookingsOverTime.rows.map(b => ({ name: b.name, bookings: Number(b.bookings) }))
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
 module.exports = router;
