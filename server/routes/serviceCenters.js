@@ -27,10 +27,11 @@ router.post("/", authorize, async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const centers = await pool.query(`
-      SELECT sc.*, COALESCE(AVG(r.rating), 0) as average_rating 
+      SELECT sc.*, COALESCE(AVG(r.rating), 0) as average_rating, u.name as manager_name
       FROM service_centers sc
       LEFT JOIN service_center_reviews r ON sc.id = r.service_center_id
-      GROUP BY sc.id
+      LEFT JOIN users u ON sc.manager_id = u.id
+      GROUP BY sc.id, u.name
       ORDER BY average_rating DESC
     `);
     res.json({ success: true, data: centers.rows });
@@ -40,11 +41,38 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Get Service Center Details
+// List mechanics for a service center
+router.get("/:id/mechanics", authorize, async (req, res) => {
+  try {
+    const mechanics = await pool.query(
+      "SELECT id, name, email, phone, status, created_at FROM users WHERE role = 'mechanic' AND service_center_id = $1 ORDER BY created_at DESC",
+      [req.params.id]
+    );
+    res.json({ success: true, data: mechanics.rows });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
+// Get Service Center Details with reviews
 router.get("/:id", async (req, res) => {
   try {
     const center = await pool.query("SELECT * FROM service_centers WHERE id = $1", [req.params.id]);
-    res.json({ success: true, data: center.rows[0] });
+    if (center.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Service center not found" });
+    }
+    const reviews = await pool.query(`
+      SELECT r.*, u.name as customer_name
+      FROM service_center_reviews r
+      JOIN users u ON r.customer_id = u.id
+      WHERE r.service_center_id = $1
+      ORDER BY r.created_at DESC
+    `, [req.params.id]);
+    res.json({
+      success: true,
+      data: { ...center.rows[0], reviews: reviews.rows },
+    });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: "Server Error" });

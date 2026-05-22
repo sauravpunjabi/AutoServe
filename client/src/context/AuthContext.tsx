@@ -5,7 +5,6 @@ import {
     useEffect,
     ReactNode,
 } from "react";
-import api from "../api/axios";
 import { jwtDecode } from "jwt-decode";
 
 interface User {

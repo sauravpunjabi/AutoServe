@@ -1,92 +1,85 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { 
-  Wrench, 
-  Settings, 
-  LogOut,
-  ListTodo,
-  CheckCircle,
-  Building
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import api from "../../api/axios";
+import MechanicLayout from "../../components/MechanicLayout";
+import LoadingPage from "../../components/ui/LoadingPage";
+import { Briefcase, Building2 } from "lucide-react";
 
 export default function MechanicDashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const [stats, setStats] = useState({ total: 0, inProgress: 0, completed: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const res = await api.get("/job-cards");
+        const jobs = res.data.data || [];
+        setStats({
+          total: jobs.length,
+          inProgress: jobs.filter((j: any) => j.status === "in_progress").length,
+          completed: jobs.filter((j: any) => j.status === "completed").length,
+        });
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
+
+  if (loading) {
+    return (
+      <MechanicLayout title="Dashboard" subtitle="Your assigned work at a glance.">
+        <LoadingPage />
+      </MechanicLayout>
+    );
+  }
+
+  const statCards = [
+    { label: "Assigned jobs", value: stats.total },
+    { label: "In progress", value: stats.inProgress },
+    { label: "Completed", value: stats.completed },
+  ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-800">
-      {/* Sidebar */}
-      <aside className="w-64 border-r bg-slate-900 text-slate-300 flex flex-col">
-        <div className="flex h-16 items-center gap-3 border-b border-slate-800 px-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-orange-500 text-white">
-            <Wrench size={18} />
+    <MechanicLayout title="Dashboard" subtitle="Your assigned work at a glance.">
+      <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {statCards.map(({ label, value }) => (
+          <div
+            key={label}
+            className="rounded-xl border border-gray-100 bg-white p-6"
+          >
+            <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
+              {label}
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-gray-900">{value}</p>
           </div>
-          <span className="text-lg font-bold text-white">Mechanic Bay</span>
-        </div>
-        <nav className="flex-1 space-y-1 p-4">
-          <Link to="/mechanic/dashboard" className="flex items-center gap-3 rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white">
-            <Settings size={18} />
-            Dashboard
-          </Link>
-          <Link to="/mechanic/job-cards" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-800 hover:text-white transition">
-            <ListTodo size={18} />
-            My Job Cards
-          </Link>
-          <Link to="/mechanic/service-centers" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-slate-800 hover:text-white transition">
-            <Building size={18} />
-            Service Centers
-          </Link>
-        </nav>
-        <div className="border-t border-slate-800 p-4">
-          <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-400 hover:bg-slate-800 hover:text-red-300 transition">
-            <LogOut size={18} />
-            Logout
-          </button>
-        </div>
-      </aside>
+        ))}
+      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900">Mechanic Dashboard</h1>
-          <p className="mt-2 text-slate-500">Welcome, {user?.name}. Let's get to work.</p>
-        </header>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-orange-50 text-orange-600 rounded-full">
-                        <Wrench size={24} />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900">Active Jobs</h2>
-                        <p className="text-slate-500 text-sm">Jobs currently assigned to you</p>
-                    </div>
-                </div>
-                <Link to="/mechanic/job-cards" className="mt-4 block w-full text-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2 rounded-lg transition">View Work Queue</Link>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-emerald-50 text-emerald-600 rounded-full">
-                        <CheckCircle size={24} />
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-bold text-slate-900">Completed</h2>
-                        <p className="text-slate-500 text-sm">Jobs you finished this week</p>
-                    </div>
-                </div>
-                <div className="mt-4 text-center">
-                    <p className="text-3xl font-black text-slate-900">8</p>
-                </div>
-            </div>
-        </div>
-      </main>
-    </div>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <Link
+          to="/mechanic/job-cards"
+          className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 transition-colors hover:bg-gray-50"
+        >
+          <Briefcase className="h-5 w-5 text-gray-400" />
+          <div>
+            <p className="text-sm font-medium text-gray-900">View job queue</p>
+            <p className="text-sm text-gray-400">See and update your assigned jobs</p>
+          </div>
+        </Link>
+        <Link
+          to="/mechanic/service-centers"
+          className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 transition-colors hover:bg-gray-50"
+        >
+          <Building2 className="h-5 w-5 text-gray-400" />
+          <div>
+            <p className="text-sm font-medium text-gray-900">Service centers</p>
+            <p className="text-sm text-gray-400">Join or check your center status</p>
+          </div>
+        </Link>
+      </div>
+    </MechanicLayout>
   );
 }

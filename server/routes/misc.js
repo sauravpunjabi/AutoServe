@@ -30,6 +30,28 @@ router.post("/invoices", authorize, async (req, res) => {
   }
 });
 
+// Get invoices for manager's service center
+router.get("/invoices/manager", authorize, async (req, res) => {
+  try {
+    if (req.user.role !== "manager") {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+    const center = await pool.query("SELECT id FROM service_centers WHERE manager_id = $1", [req.user.id]);
+    if (center.rows.length === 0) return res.json({ success: true, data: [] });
+    const invoices = await pool.query(`
+      SELECT i.*, sb.booking_date, sb.service_type
+      FROM invoices i
+      JOIN service_bookings sb ON i.booking_id = sb.id
+      WHERE sb.service_center_id = $1
+      ORDER BY i.created_at DESC
+    `, [center.rows[0].id]);
+    res.json({ success: true, data: invoices.rows });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
 // Get My Invoices (Customer)
 router.get("/invoices/me", authorize, async (req, res) => {
   try {
