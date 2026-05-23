@@ -24,12 +24,12 @@ export default function CustomerDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [vRes, bRes] = await Promise.all([
+        const [vRes, bRes] = await Promise.allSettled([
           api.get('/vehicles'),
           api.get('/bookings'),
         ]);
-        setVehicles(vRes.data.data || []);
-        setBookings(bRes.data.data || []);
+        if (vRes.status === 'fulfilled') setVehicles(vRes.value.data.data || []);
+        if (bRes.status === 'fulfilled') setBookings(bRes.value.data.data || []);
       } catch (err) {
         console.error(err);
       } finally {

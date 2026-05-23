@@ -9,7 +9,10 @@ router.get("/", authorize, async (req, res) => {
   try {
     if (req.user.role === "mechanic") {
       const jobs = await pool.query(
-        `SELECT j.*, b.booking_date, b.service_type, b.time_slot
+        `SELECT j.*, b.booking_date, b.service_type, b.time_slot,
+                (SELECT COALESCE(json_agg(json_build_object('id', svc.id, 'name', svc.name, 'price', bs.price)), '[]'::json)
+                 FROM booking_services bs JOIN services svc ON bs.service_id = svc.id
+                 WHERE bs.booking_id = b.id) AS services
          FROM job_cards j
          JOIN service_bookings b ON j.booking_id = b.id
          WHERE j.mechanic_id = $1
@@ -20,12 +23,15 @@ router.get("/", authorize, async (req, res) => {
     }
     if (req.user.role === "manager") {
       const jobs = await pool.query(
-        `SELECT j.*, b.booking_date, b.service_type, b.time_slot, m.name as mechanic_name
+        `SELECT j.*, b.booking_date, b.service_type, b.time_slot, m.name AS mechanic_name,
+                (SELECT COALESCE(json_agg(json_build_object('id', svc.id, 'name', svc.name, 'price', bs.price)), '[]'::json)
+                 FROM booking_services bs JOIN services svc ON bs.service_id = svc.id
+                 WHERE bs.booking_id = b.id) AS services
          FROM job_cards j
          JOIN service_bookings b ON j.booking_id = b.id
-         JOIN service_centers s ON b.service_center_id = s.id
+         JOIN service_centers sc ON b.service_center_id = sc.id
          LEFT JOIN users m ON j.mechanic_id = m.id
-         WHERE s.manager_id = $1
+         WHERE sc.manager_id = $1
          ORDER BY j.created_at DESC`,
         [req.user.id]
       );
@@ -41,9 +47,12 @@ router.get("/", authorize, async (req, res) => {
 router.get("/:id", authorize, async (req, res) => {
   try {
     const jobRes = await pool.query(
-      `SELECT jc.*, sb.service_type, sb.booking_date, sb.time_slot, sb.customer_id, sb.notes as booking_notes,
-              v.make, v.model, v.year, v.license_plate, u.name as customer_name, u.email as customer_email,
-              m.name as mechanic_name
+      `SELECT jc.*, sb.service_type, sb.booking_date, sb.time_slot, sb.customer_id, sb.notes AS booking_notes,
+              v.make, v.model, v.year, v.license_plate, u.name AS customer_name, u.email AS customer_email,
+              m.name AS mechanic_name,
+              (SELECT COALESCE(json_agg(json_build_object('id', svc.id, 'name', svc.name, 'price', bs.price)), '[]'::json)
+               FROM booking_services bs JOIN services svc ON bs.service_id = svc.id
+               WHERE bs.booking_id = sb.id) AS services
        FROM job_cards jc
        JOIN service_bookings sb ON jc.booking_id = sb.id
        JOIN vehicles v ON sb.vehicle_id = v.id

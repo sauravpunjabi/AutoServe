@@ -38,12 +38,18 @@ router.post("/invoices", authorize, async (req, res) => {
       (acc, curr) => acc + curr.quantity_used * parseFloat(curr.unit_price),
       0
     );
-    const total_amount = labor + parts_cost;
+
+    const servicesResult = await pool.query(
+      "SELECT COALESCE(SUM(price), 0) AS services_total FROM booking_services WHERE booking_id = $1",
+      [booking_id]
+    );
+    const services_total = parseFloat(servicesResult.rows[0].services_total);
+    const total_amount = labor + parts_cost + services_total;
 
     const invoice = await pool.query(
-      `INSERT INTO invoices (job_card_id, booking_id, customer_id, labor_cost, parts_cost, total_amount)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [job_card_id, booking_id, customer_id, labor, parts_cost, total_amount]
+      `INSERT INTO invoices (job_card_id, booking_id, customer_id, labor_cost, parts_cost, services_total, total_amount)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [job_card_id, booking_id, customer_id, labor, parts_cost, services_total, total_amount]
     );
     res.json({ success: true, data: invoice.rows[0] });
   } catch (err) {
@@ -113,12 +119,14 @@ router.get("/invoices/me", authorize, async (req, res) => {
         i.id,
         i.labor_cost,
         i.parts_cost,
+        i.services_total,
         i.total_amount,
         i.status,
         i.created_at AS issued_at,
         i.job_card_id,
         u.name  AS customer_name,
         u.email AS customer_email,
+        sb.id   AS booking_id,
         sb.service_type,
         sb.booking_date,
         v.make          AS vehicle_make,
@@ -135,7 +143,12 @@ router.get("/invoices/me", authorize, async (req, res) => {
             )
           ) FILTER (WHERE jp.id IS NOT NULL),
           '[]'::json
-        ) AS parts
+        ) AS parts,
+        (
+          SELECT COALESCE(json_agg(json_build_object('id', svc.id, 'name', svc.name, 'price', bs2.price)), '[]'::json)
+          FROM booking_services bs2 JOIN services svc ON bs2.service_id = svc.id
+          WHERE bs2.booking_id = sb.id
+        ) AS services
       FROM invoices i
       JOIN users u ON i.customer_id = u.id
       JOIN service_bookings sb ON i.booking_id = sb.id
@@ -145,7 +158,7 @@ router.get("/invoices/me", authorize, async (req, res) => {
       WHERE i.customer_id = $1
       GROUP BY
         i.id, u.name, u.email,
-        sb.service_type, sb.booking_date,
+        sb.id, sb.service_type, sb.booking_date,
         v.make, v.model, v.year, v.license_plate
       ORDER BY i.created_at DESC`,
       [req.user.id]

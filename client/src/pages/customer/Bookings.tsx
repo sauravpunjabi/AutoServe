@@ -8,6 +8,7 @@ import LoadingPage from '../../components/ui/LoadingPage';
 import EmptyState from '../../components/ui/EmptyState';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Calendar, Clock } from 'lucide-react';
+import ServiceTags from '../../components/ui/ServiceTags';
 
 export default function CustomerBookings() {
   const navigate = useNavigate();
@@ -75,9 +76,7 @@ export default function CustomerBookings() {
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <p style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {b.service_type}
-                    </p>
+                    <ServiceTags services={b.services} serviceType={b.service_type} />
                     <StatusBadge status={b.status} />
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '13px', color: 'var(--text-secondary)' }}>

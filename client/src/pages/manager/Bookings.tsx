@@ -8,6 +8,7 @@ import LoadingPage from '../../components/ui/LoadingPage';
 import EmptyState from '../../components/ui/EmptyState';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Calendar } from 'lucide-react';
+import ServiceTags from '../../components/ui/ServiceTags';
 import { useManagerCenter } from '../../hooks/useManagerCenter';
 import {
   TableWrap,
@@ -149,7 +150,9 @@ export default function ManagerBookings() {
                   <td style={{ ...tdStyle, fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
                     {b.make} {b.model}
                   </td>
-                  <td style={tdStyle}>{b.service_type}</td>
+                  <td style={tdStyle}>
+                    <ServiceTags services={b.services} serviceType={b.service_type} />
+                  </td>
                   <td style={tdStyle}>
                     <StatusBadge status={b.status} />
                   </td>

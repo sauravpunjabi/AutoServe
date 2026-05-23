@@ -296,6 +296,32 @@ export default function CustomerJobTracker() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {Array.isArray(jobCard.services) && jobCard.services.length > 0 && (
+            <Card>
+              <SectionLabel>Services booked</SectionLabel>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {jobCard.services.map((s: any, i: number) => (
+                  <li
+                    key={s.id || i}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      padding: '8px 0',
+                      borderBottom:
+                        i < jobCard.services.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{s.name}</span>
+                    <span style={{ color: 'var(--accent)', fontFamily: 'DM Mono, monospace' }}>
+                      ₹{Number(s.price).toLocaleString()}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
           <Card>
             <SectionLabel>Mechanic notes</SectionLabel>
             <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
@@ -325,7 +351,7 @@ export default function CustomerJobTracker() {
                     }}
                   >
                     <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{p.part_name}</span>
-                    <span style={{ color: 'var(--text-secondary)' }}>Qty: {p.quantity}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Qty: {p.quantity_used}</span>
                   </li>
                 ))}
               </ul>

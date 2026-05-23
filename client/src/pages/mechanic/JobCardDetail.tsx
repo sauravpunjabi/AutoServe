@@ -121,7 +121,29 @@ export default function MechanicJobCardDetail() {
         <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--text-primary)' }}>
           {job.year} {job.make} {job.model} · {job.license_plate}
         </p>
-        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>{job.service_type}</p>
+        {Array.isArray(job.services) && job.services.length > 0 ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+            {job.services.map((s: any, i: number) => (
+              <span
+                key={s.id || i}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: 'var(--accent)',
+                  backgroundColor: 'var(--accent-subtle)',
+                }}
+              >
+                {s.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>{job.service_type}</p>
+        )}
         <div
           style={{
             marginTop: '16px',

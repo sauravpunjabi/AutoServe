@@ -82,6 +82,27 @@ function downloadInvoicePDF(inv: any) {
     : '-';
   doc.text(`Booking date: ${bookingDateStr}`, 14, 77);
 
+  // ── Services table ────────────────────────────────────────────────────────
+  const invServices: any[] = Array.isArray(inv.services) ? inv.services.filter(Boolean) : [];
+  let partsStartY = 86;
+
+  if (invServices.length > 0) {
+    autoTable(doc, {
+      startY: 86,
+      head: [['Service', 'Price']],
+      body: invServices.map((s) => [s.name, `₹${Number(s.price).toLocaleString()}`]),
+      styles: { fontSize: 9, cellPadding: 4 },
+      headStyles: { fillColor: [25, 25, 25], textColor: 255, fontStyle: 'bold' },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 40, halign: 'right' },
+      },
+    });
+    partsStartY = (doc as any).lastAutoTable.finalY + 6;
+  }
+
+  // ── Parts table ───────────────────────────────────────────────────────────
   const parts: any[] = Array.isArray(inv.parts) ? inv.parts : [];
   const tableRows = parts.map((p) => [
     p.name,
@@ -91,7 +112,7 @@ function downloadInvoicePDF(inv: any) {
   ]);
 
   autoTable(doc, {
-    startY: 86,
+    startY: partsStartY,
     head: [['Part', 'Qty', 'Unit Price', 'Subtotal']],
     body: tableRows.length > 0 ? tableRows : [['No parts used', '', '', '']],
     styles: { fontSize: 9, cellPadding: 4 },
@@ -112,32 +133,47 @@ function downloadInvoicePDF(inv: any) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(100);
-  doc.text('Labor cost', labelX, afterTable);
-  doc.text(`$${Number(inv.labor_cost).toFixed(2)}`, valueX, afterTable, { align: 'right' });
 
-  doc.text('Parts total', labelX, afterTable + 7);
-  doc.text(`$${Number(inv.parts_cost).toFixed(2)}`, valueX, afterTable + 7, { align: 'right' });
+  let rowY = afterTable;
+  const servicesTotal = Number(inv.services_total || 0);
+  const computedServicesTotal = invServices.reduce((s: number, x: any) => s + Number(x.price), 0);
+  const displayServicesTotal = servicesTotal > 0 ? servicesTotal : computedServicesTotal;
+
+  if (displayServicesTotal > 0) {
+    doc.text('Services total', labelX, rowY);
+    doc.text(`₹${displayServicesTotal.toLocaleString()}`, valueX, rowY, { align: 'right' });
+    rowY += 7;
+  }
+
+  doc.text('Parts total', labelX, rowY);
+  doc.text(`$${Number(inv.parts_cost).toFixed(2)}`, valueX, rowY, { align: 'right' });
+  rowY += 7;
+
+  doc.text('Labor cost', labelX, rowY);
+  doc.text(`$${Number(inv.labor_cost).toFixed(2)}`, valueX, rowY, { align: 'right' });
+  rowY += 4;
 
   doc.setDrawColor(200);
-  doc.line(labelX, afterTable + 10, valueX, afterTable + 10);
+  doc.line(labelX, rowY, valueX, rowY);
+  rowY += 7;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(20, 20, 20);
-  doc.text('Grand Total', labelX, afterTable + 17);
+  doc.text('Grand Total', labelX, rowY);
   doc.setFont('courier', 'bold');
-  doc.text(`$${Number(inv.total_amount).toFixed(2)}`, valueX, afterTable + 17, { align: 'right' });
+  doc.text(`$${Number(inv.total_amount).toFixed(2)}`, valueX, rowY, { align: 'right' });
 
   const isPaid = inv.status === 'paid';
   const badgeColor: [number, number, number] = isPaid ? [22, 163, 74] : [220, 38, 38];
   const badgeText = isPaid ? 'PAID' : 'UNPAID';
   const badgeW = isPaid ? 22 : 32;
   doc.setFillColor(...badgeColor);
-  doc.roundedRect(14, afterTable + 9, badgeW, 8, 2, 2, 'F');
+  doc.roundedRect(14, rowY - 8, badgeW, 8, 2, 2, 'F');
   doc.setTextColor(255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
-  doc.text(badgeText, 14 + badgeW / 2, afterTable + 14.5, { align: 'center' });
+  doc.text(badgeText, 14 + badgeW / 2, rowY - 2.5, { align: 'center' });
 
   doc.setDrawColor(220);
   doc.line(14, pageH - 18, pageW - 14, pageH - 18);

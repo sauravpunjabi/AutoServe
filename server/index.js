@@ -30,6 +30,7 @@ app.use("/api/vehicles", require("./routes/vehicles"));
 app.use("/api/bookings", require("./routes/bookings"));
 app.use("/api/job-cards", require("./routes/jobCards"));
 app.use("/api/inventory", require("./routes/inventory"));
+app.use("/api/services", require("./routes/services"));
 app.use("/api/misc", require("./routes/misc"));
 
 app.use((req, res) => {

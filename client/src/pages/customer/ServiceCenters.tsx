@@ -34,7 +34,7 @@ export default function CustomerServiceCenters() {
   const filteredCenters = centers.filter(
     (c: any) =>
       c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.location.toLowerCase().includes(searchTerm.toLowerCase())
+      c.address.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -110,7 +110,7 @@ export default function CustomerServiceCenters() {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ display: 'flex', gap: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                     <MapPin size={14} color="var(--text-muted)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                    <span>{c.location}</span>
+                    <span>{c.address}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '10px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                     <Phone size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />

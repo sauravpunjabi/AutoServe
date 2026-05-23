@@ -197,6 +197,27 @@ export default function ManagerJobCardDetail() {
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
               {job.customer_name}
             </p>
+            {Array.isArray(job.services) && job.services.length > 0 && (
+              <div style={{ marginTop: '12px' }}>
+                {job.services.map((s: any) => (
+                  <div
+                    key={s.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '12px',
+                      padding: '3px 0',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    <span>{s.name}</span>
+                    <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                      ₹{Number(s.price).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
           <StatusBadge status={job.status} />
         </div>

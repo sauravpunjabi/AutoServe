@@ -7,6 +7,7 @@ import { managerNav } from '../../lib/nav';
 import LoadingPage from '../../components/ui/LoadingPage';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { ArrowLeft } from 'lucide-react';
+import ServiceTags from '../../components/ui/ServiceTags';
 import { Card, SectionLabel, TextSelect, TextLink, Mono } from '../../components/ui/primitives';
 
 const dtStyle: React.CSSProperties = {
@@ -106,8 +107,51 @@ export default function ManagerBookingDetail() {
           <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
               <dt style={dtStyle}>Service</dt>
-              <dd style={ddStyle}>{booking.service_type}</dd>
+              <dd style={{ margin: '4px 0 0' }}>
+                <ServiceTags services={booking.services} serviceType={booking.service_type} />
+              </dd>
             </div>
+            {Array.isArray(booking.services) && booking.services.length > 0 && (
+              <div>
+                <dt style={dtStyle}>Services breakdown</dt>
+                <dd style={{ margin: '4px 0 0' }}>
+                  {booking.services.map((s: any) => (
+                    <div
+                      key={s.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '12px',
+                        padding: '3px 0',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      <span>{s.name}</span>
+                      <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                        ₹{Number(s.price).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '12px',
+                      paddingTop: '6px',
+                      borderTop: '1px solid var(--border-subtle)',
+                      marginTop: '4px',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <span>Subtotal</span>
+                    <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                      ₹{Number(booking.services_total || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </dd>
+              </div>
+            )}
             <div>
               <dt style={dtStyle}>Date</dt>
               <dd style={ddStyle}>

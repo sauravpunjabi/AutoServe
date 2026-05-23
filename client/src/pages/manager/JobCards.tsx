@@ -8,6 +8,7 @@ import LoadingPage from '../../components/ui/LoadingPage';
 import EmptyState from '../../components/ui/EmptyState';
 import StatusBadge from '../../components/ui/StatusBadge';
 import { Briefcase } from 'lucide-react';
+import ServiceTags from '../../components/ui/ServiceTags';
 import { TableWrap, thStyle, tdStyle, TableRow } from '../../components/ui/primitives';
 
 export default function ManagerJobCards() {
@@ -76,7 +77,9 @@ export default function ManagerJobCards() {
                   <td style={tdStyle}>
                     {j.booking_date ? new Date(j.booking_date).toLocaleDateString() : '—'}
                   </td>
-                  <td style={tdStyle}>{j.service_type || '—'}</td>
+                  <td style={tdStyle}>
+                    <ServiceTags services={j.services} serviceType={j.service_type} />
+                  </td>
                   <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
                     {j.mechanic_name || 'Unassigned'}
                   </td>
