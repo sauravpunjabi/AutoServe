@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../api/axios';
+import { socket } from '../../lib/socket';
 import AppLayout from '../../components/AppLayout';
 import { customerNav } from '../../lib/nav';
 import { Card, SectionLabel, TextLink } from '../../components/ui/primitives';
@@ -19,6 +20,53 @@ export default function CustomerJobTracker() {
   const { id } = useParams();
   const [jobCard, setJobCard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  useEffect(() => {
+    socket.connect();
+
+    const onConnect = () => setIsConnected(true);
+    const onDisconnect = () => setIsConnected(false);
+
+    socket.on('connect', onConnect);
+    socket.on('disconnect', onDisconnect);
+
+    if (socket.connected) {
+      setIsConnected(true);
+    }
+
+    socket.on('task_updated', (data: { job_card_id: string; taskId: string; status: string }) => {
+      if (data.job_card_id === id) {
+        setJobCard((prev: any) => {
+          if (!prev) return prev;
+          const updatedTasks = (prev.tasks || []).map((task: any) => {
+            if (task.id === data.taskId) {
+              return { ...task, status: data.status };
+            }
+            return task;
+          });
+          return { ...prev, tasks: updatedTasks };
+        });
+      }
+    });
+
+    socket.on('job_updated', (data: { job_card_id: string; status: string }) => {
+      if (data.job_card_id === id) {
+        setJobCard((prev: any) => {
+          if (!prev) return prev;
+          return { ...prev, status: data.status };
+        });
+      }
+    });
+
+    return () => {
+      socket.off('connect', onConnect);
+      socket.off('disconnect', onDisconnect);
+      socket.off('task_updated');
+      socket.off('job_updated');
+      socket.disconnect();
+    };
+  }, [id]);
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -72,6 +120,35 @@ export default function CustomerJobTracker() {
       title={`Tracking job #${id?.slice(0, 8)}`}
       subtitle="Real-time status of your vehicle's service."
       navLinks={customerNav}
+      actions={
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,
+            borderRadius: '12px',
+            padding: '4px 10px',
+            fontSize: '12px',
+            fontWeight: 600,
+            color: isConnected ? '#10b981' : '#ef4444',
+            transition: 'all 0.3s ease',
+          }}
+        >
+          <span
+            style={{
+              width: '6px',
+              height: '6px',
+              borderRadius: '50%',
+              backgroundColor: isConnected ? '#10b981' : '#ef4444',
+              boxShadow: isConnected ? '0 0 6px #10b981' : 'none',
+              display: 'inline-block',
+            }}
+          />
+          {isConnected ? 'Live' : 'Offline'}
+        </div>
+      }
     >
       <div style={{ marginBottom: '24px' }}>
         <TextLink to="/customer/bookings">← Back to appointments</TextLink>
@@ -208,7 +285,7 @@ export default function CustomerJobTracker() {
                         color: 'var(--text-primary)',
                       }}
                     >
-                      {task.task_description}
+                      {task.description}
                     </span>
                     <StatusBadge status={task.status} />
                   </li>

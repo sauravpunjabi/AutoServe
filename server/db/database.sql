@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
 CREATE TABLE IF NOT EXISTS service_bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_id UUID REFERENCES users(id),
-  vehicle_id UUID REFERENCES vehicles(id),
+  vehicle_id UUID REFERENCES vehicles(id) ON DELETE SET NULL,
   service_center_id UUID REFERENCES service_centers(id),
   service_type VARCHAR NOT NULL,
   booking_date DATE NOT NULL,

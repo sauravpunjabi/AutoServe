@@ -75,10 +75,79 @@ router.get("/invoices/manager", authorize, async (req, res) => {
   }
 });
 
+router.patch("/invoices/:id/pay", authorize, async (req, res) => {
+  try {
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+
+    const invoice = await pool.query(
+      "SELECT * FROM invoices WHERE id = $1 AND customer_id = $2",
+      [req.params.id, req.user.id]
+    );
+
+    if (invoice.rows.length === 0) {
+      return res.status(403).json({ success: false, message: "Invoice not found" });
+    }
+
+    if (invoice.rows[0].status === "paid") {
+      return res.status(400).json({ success: false, message: "Invoice already paid" });
+    }
+
+    const updated = await pool.query(
+      "UPDATE invoices SET status = 'paid' WHERE id = $1 RETURNING *",
+      [req.params.id]
+    );
+
+    res.json({ success: true, data: updated.rows[0] });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
 router.get("/invoices/me", authorize, async (req, res) => {
   try {
     const invoices = await pool.query(
-      "SELECT * FROM invoices WHERE customer_id = $1 ORDER BY created_at DESC",
+      `SELECT
+        i.id,
+        i.labor_cost,
+        i.parts_cost,
+        i.total_amount,
+        i.status,
+        i.created_at AS issued_at,
+        i.job_card_id,
+        u.name  AS customer_name,
+        u.email AS customer_email,
+        sb.service_type,
+        sb.booking_date,
+        v.make          AS vehicle_make,
+        v.model         AS vehicle_model,
+        v.year          AS vehicle_year,
+        v.license_plate AS vehicle_license_plate,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'name',       p.name,
+              'quantity',   jp.quantity_used,
+              'unit_price', p.unit_price,
+              'subtotal',   jp.quantity_used * p.unit_price
+            )
+          ) FILTER (WHERE jp.id IS NOT NULL),
+          '[]'::json
+        ) AS parts
+      FROM invoices i
+      JOIN users u ON i.customer_id = u.id
+      JOIN service_bookings sb ON i.booking_id = sb.id
+      LEFT JOIN vehicles v ON sb.vehicle_id = v.id
+      LEFT JOIN job_parts jp ON i.job_card_id = jp.job_card_id
+      LEFT JOIN parts p ON jp.part_id = p.id
+      WHERE i.customer_id = $1
+      GROUP BY
+        i.id, u.name, u.email,
+        sb.service_type, sb.booking_date,
+        v.make, v.model, v.year, v.license_plate
+      ORDER BY i.created_at DESC`,
       [req.user.id]
     );
     res.json({ success: true, data: invoices.rows });

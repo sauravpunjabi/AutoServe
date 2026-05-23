@@ -135,7 +135,17 @@ router.patch("/:id/status", authorize, async (req, res) => {
     if (updated.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Job card not found" });
     }
-    res.json({ success: true, data: updated.rows[0] });
+
+    const updatedJob = updated.rows[0];
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("job_updated", {
+        job_card_id: id,
+        status: updatedJob.status,
+      });
+    }
+
+    res.json({ success: true, data: updatedJob });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: "Server Error" });
@@ -181,7 +191,18 @@ router.patch("/tasks/:taskId/status", authorize, async (req, res) => {
     if (task.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
-    res.json({ success: true, data: task.rows[0] });
+
+    const updatedTask = task.rows[0];
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("task_updated", {
+        job_card_id: updatedTask.job_card_id,
+        taskId: updatedTask.id,
+        status: updatedTask.status,
+      });
+    }
+
+    res.json({ success: true, data: updatedTask });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: "Server Error" });

@@ -29,6 +29,8 @@ export default function CustomerVehicles() {
     license_plate: '',
   });
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchVehicles();
@@ -62,15 +64,19 @@ export default function CustomerVehicles() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to remove this vehicle?')) return;
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setDeleting(true);
     try {
-      await api.delete(`/vehicles/${id}`);
-      fetchVehicles();
+      await api.delete(`/vehicles/${deletingId}`);
       toast.success('Vehicle removed');
-    } catch (err) {
+      fetchVehicles();
+      setDeletingId(null);
+    } catch (err: any) {
       console.error(err);
-      toast.error('Failed to remove vehicle');
+      toast.error(err.response?.data?.message || 'Failed to remove vehicle');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -214,7 +220,7 @@ export default function CustomerVehicles() {
                     </p>
                   </div>
                 </div>
-                <DangerTextButton onClick={() => handleDelete(v.id)}>Remove</DangerTextButton>
+                <DangerTextButton onClick={() => setDeletingId(v.id)}>Remove</DangerTextButton>
               </div>
               <div
                 style={{
@@ -233,6 +239,100 @@ export default function CustomerVehicles() {
               </div>
             </Card>
           ))}
+        </div>
+      )}
+
+      {deletingId && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1050,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              width: '100%',
+              maxWidth: '400px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px' }}>
+                Remove Vehicle
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+                Are you sure you want to remove this vehicle? This action cannot be undone.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeletingId(null)}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-secondary)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!deleting) {
+                    e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!deleting) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                  }
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDelete}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius)',
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#dc2626';
+                }}
+                onMouseLeave={(e) => {
+                  if (!deleting) e.currentTarget.style.backgroundColor = '#ef4444';
+                }}
+              >
+                {deleting ? 'Removing…' : 'Remove'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </AppLayout>
