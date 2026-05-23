@@ -1,23 +1,33 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import EmptyState from "../../components/ui/EmptyState";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { Calendar } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import EmptyState from '../../components/ui/EmptyState';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { Calendar } from 'lucide-react';
+import {
+  TableWrap,
+  thStyle,
+  tdStyle,
+  TableRow,
+  SuccessTextButton,
+  DangerTextButton,
+} from '../../components/ui/primitives';
 
 export default function ManagerBookings() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchBookings = async () => {
     try {
-      const res = await api.get("/bookings");
+      const res = await api.get('/bookings');
       setBookings(res.data.data || []);
     } catch {
-      toast.error("Failed to load bookings");
+      toast.error('Failed to load bookings');
     } finally {
       setLoading(false);
     }
@@ -27,28 +37,29 @@ export default function ManagerBookings() {
     fetchBookings();
   }, []);
 
-  const updateStatus = async (id: string, status: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const updateStatus = async (id: string, status: string) => {
+    setUpdatingId(id);
     try {
       await api.patch(`/bookings/${id}/status`, { status });
       toast.success(`Booking ${status}`);
       fetchBookings();
     } catch {
-      toast.error("Failed to update booking");
+      toast.error('Failed to update booking');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   if (loading) {
     return (
-      <ManagerLayout title="Schedule" subtitle="Manage incoming service requests.">
+      <AppLayout title="Schedule" subtitle="Manage incoming service requests." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   return (
-    <ManagerLayout title="Schedule" subtitle="Manage incoming service requests.">
+    <AppLayout title="Schedule" subtitle="Manage incoming service requests." navLinks={managerNav}>
       {bookings.length === 0 ? (
         <EmptyState
           icon={Calendar}
@@ -56,61 +67,63 @@ export default function ManagerBookings() {
           description="Bookings from customers will appear here."
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-          <table className="w-full text-sm">
+        <TableWrap>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-widest text-gray-400">
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Time</th>
-                <th className="px-4 py-3">Vehicle</th>
-                <th className="px-4 py-3">Service</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={thStyle}>Date</th>
+                <th style={thStyle}>Time</th>
+                <th style={thStyle}>Vehicle</th>
+                <th style={thStyle}>Service</th>
+                <th style={thStyle}>Status</th>
+                <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {bookings.map((b) => (
-                <tr
-                  key={b.id}
-                  className="border-b border-gray-100 transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3">
-                    <Link to={`/manager/bookings/${b.id}`} className="text-blue-600 hover:underline">
+                <TableRow key={b.id}>
+                  <td style={tdStyle}>
+                    <Link
+                      to={`/manager/bookings/${b.id}`}
+                      style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
+                    >
                       {new Date(b.booking_date).toLocaleDateString()}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-500">{b.time_slot?.slice?.(0, 5) || b.time_slot}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-gray-700">
+                  <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
+                    {b.time_slot?.slice?.(0, 5) || b.time_slot}
+                  </td>
+                  <td style={{ ...tdStyle, fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
                     {b.make} {b.model}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{b.service_type}</td>
-                  <td className="px-4 py-3">
+                  <td style={tdStyle}>{b.service_type}</td>
+                  <td style={tdStyle}>
                     <StatusBadge status={b.status} />
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    {b.status === "pending" && (
+                  <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    {b.status === 'pending' && (
                       <>
-                        <button
-                          onClick={(e) => updateStatus(b.id, "approved", e)}
-                          className="mr-2 text-sm font-medium text-emerald-600 hover:underline"
+                        <SuccessTextButton
+                          onClick={() => updateStatus(b.id, 'approved')}
+                          disabled={updatingId === b.id}
                         >
-                          Approve
-                        </button>
-                        <button
-                          onClick={(e) => updateStatus(b.id, "rejected", e)}
-                          className="text-sm font-medium text-red-500 hover:underline"
+                          {updatingId === b.id ? 'Updating…' : 'Approve'}
+                        </SuccessTextButton>
+                        <DangerTextButton
+                          onClick={() => updateStatus(b.id, 'rejected')}
+                          disabled={updatingId === b.id}
                         >
                           Reject
-                        </button>
+                        </DangerTextButton>
                       </>
                     )}
                   </td>
-                </tr>
+                </TableRow>
               ))}
             </tbody>
           </table>
-        </div>
+        </TableWrap>
       )}
-    </ManagerLayout>
+    </AppLayout>
   );
 }

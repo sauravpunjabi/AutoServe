@@ -1,17 +1,28 @@
-import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import EmptyState from "../../components/ui/EmptyState";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { useManagerCenter } from "../../hooks/useManagerCenter";
-import { Users } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import EmptyState from '../../components/ui/EmptyState';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { useManagerCenter } from '../../hooks/useManagerCenter';
+import { Users } from 'lucide-react';
+import {
+  SectionLabel,
+  TableWrap,
+  thStyle,
+  tdStyle,
+  TableRow,
+  SuccessTextButton,
+  DangerTextButton,
+} from '../../components/ui/primitives';
 
 export default function ManagerMechanics() {
   const { centerId, loading: centerLoading } = useManagerCenter();
   const [mechanics, setMechanics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchMechanics = async () => {
     if (!centerId) return;
@@ -19,7 +30,7 @@ export default function ManagerMechanics() {
       const res = await api.get(`/service-centers/${centerId}/mechanics`);
       setMechanics(res.data.data || []);
     } catch {
-      toast.error("Failed to load mechanics");
+      toast.error('Failed to load mechanics');
     } finally {
       setLoading(false);
     }
@@ -30,27 +41,30 @@ export default function ManagerMechanics() {
     else if (!centerLoading) setLoading(false);
   }, [centerId, centerLoading]);
 
-  const updateStatus = async (userId: string, status: "active" | "rejected") => {
+  const updateStatus = async (userId: string, status: 'active' | 'rejected') => {
+    setUpdatingId(userId);
     try {
       await api.patch(`/service-centers/${centerId}/mechanics/${userId}`, { status });
       toast.success(`Mechanic ${status}`);
       fetchMechanics();
     } catch {
-      toast.error("Failed to update mechanic");
+      toast.error('Failed to update mechanic');
+    } finally {
+      setUpdatingId(null);
     }
   };
 
   if (loading || centerLoading) {
     return (
-      <ManagerLayout title="Mechanics" subtitle="Approve and manage your team.">
+      <AppLayout title="Mechanics" subtitle="Approve and manage your team." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   if (!centerId) {
     return (
-      <ManagerLayout title="Mechanics" subtitle="Approve and manage your team.">
+      <AppLayout title="Mechanics" subtitle="Approve and manage your team." navLinks={managerNav}>
         <EmptyState
           icon={Users}
           title="No service center"
@@ -58,93 +72,93 @@ export default function ManagerMechanics() {
           actionLabel="Create center"
           actionTo="/manager/service-center/create"
         />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
-  const pending = mechanics.filter((m) => m.status === "pending");
-  const active = mechanics.filter((m) => m.status === "active");
+  const pending = mechanics.filter((m) => m.status === 'pending');
+  const active = mechanics.filter((m) => m.status === 'active');
 
-  const MechanicRow = ({ m, showActions }: { m: any; showActions?: boolean }) => (
-    <tr className="border-b border-gray-100 hover:bg-gray-50">
-      <td className="px-4 py-3 text-sm text-gray-900">{m.name}</td>
-      <td className="px-4 py-3 text-sm text-gray-500">{m.email}</td>
-      <td className="px-4 py-3">
+  const MechanicCells = ({ m, showActions }: { m: any; showActions?: boolean }) => (
+    <>
+      <td style={tdStyle}>{m.name}</td>
+      <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>{m.email}</td>
+      <td style={tdStyle}>
         <StatusBadge status={m.status} />
       </td>
       {showActions && (
-        <td className="px-4 py-3 text-right">
-          <button
-            onClick={() => updateStatus(m.id, "active")}
-            className="mr-2 text-sm font-medium text-emerald-600 hover:underline"
+        <td style={{ ...tdStyle, textAlign: 'right' }}>
+          <SuccessTextButton
+            onClick={() => updateStatus(m.id, 'active')}
+            disabled={updatingId === m.id}
           >
-            Approve
-          </button>
-          <button
-            onClick={() => updateStatus(m.id, "rejected")}
-            className="text-sm font-medium text-red-500 hover:underline"
+            {updatingId === m.id ? 'Updating…' : 'Approve'}
+          </SuccessTextButton>
+          <DangerTextButton
+            onClick={() => updateStatus(m.id, 'rejected')}
+            disabled={updatingId === m.id}
           >
             Reject
-          </button>
+          </DangerTextButton>
         </td>
       )}
-    </tr>
+    </>
   );
 
   return (
-    <ManagerLayout title="Mechanics" subtitle="Approve and manage your team.">
-      <section className="mb-8">
-        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-gray-400">
-          Pending approval
-        </p>
+    <AppLayout title="Mechanics" subtitle="Approve and manage your team." navLinks={managerNav}>
+      <section style={{ marginBottom: '32px' }}>
+        <SectionLabel>Pending approval</SectionLabel>
         {pending.length === 0 ? (
-          <p className="text-sm text-gray-400">No pending requests.</p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No pending requests.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-            <table className="w-full text-sm">
+          <TableWrap>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-widest text-gray-400">
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Email</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {pending.map((m) => (
-                  <MechanicRow key={m.id} m={m} showActions />
+                  <TableRow key={m.id}>
+                    <MechanicCells m={m} showActions />
+                  </TableRow>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
       </section>
 
       <section>
-        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-gray-400">
-          Active mechanics
-        </p>
+        <SectionLabel>Active mechanics</SectionLabel>
         {active.length === 0 ? (
-          <p className="text-sm text-gray-400">No active mechanics yet.</p>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No active mechanics yet.</p>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-            <table className="w-full text-sm">
+          <TableWrap>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-widest text-gray-400">
-                  <th className="px-4 py-3">Name</th>
-                  <th className="px-4 py-3">Email</th>
-                  <th className="px-4 py-3">Status</th>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th style={thStyle}>Name</th>
+                  <th style={thStyle}>Email</th>
+                  <th style={thStyle}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {active.map((m) => (
-                  <MechanicRow key={m.id} m={m} />
+                  <TableRow key={m.id}>
+                    <MechanicCells m={m} />
+                  </TableRow>
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableWrap>
         )}
       </section>
-    </ManagerLayout>
+    </AppLayout>
   );
 }

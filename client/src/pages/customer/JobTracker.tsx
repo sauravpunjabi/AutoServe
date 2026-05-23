@@ -1,8 +1,19 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import api from "../../api/axios";
-import { ArrowLeft, CheckCircle, Clock, Wrench, Settings, Package } from "lucide-react";
-import CustomerLayout from "../../components/CustomerLayout";
+import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { customerNav } from '../../lib/nav';
+import { Card, SectionLabel, TextLink } from '../../components/ui/primitives';
+import LoadingPage from '../../components/ui/LoadingPage';
+import EmptyState from '../../components/ui/EmptyState';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { CheckCircle, Clock, Wrench, Package, Briefcase } from 'lucide-react';
+
+const STEPS = [
+  { key: 'created', title: 'Vehicle dropped off', desc: 'Your vehicle has been checked in and a job card is created.', icon: Clock },
+  { key: 'in_progress', title: 'Service in progress', desc: 'Our mechanics are currently working on your vehicle.', icon: Wrench },
+  { key: 'completed', title: 'Ready for pickup', desc: 'Service is fully completed and your vehicle is ready to go.', icon: CheckCircle },
+];
 
 export default function CustomerJobTracker() {
   const { id } = useParams();
@@ -25,141 +36,226 @@ export default function CustomerJobTracker() {
 
   if (loading) {
     return (
-      <CustomerLayout title="Job Tracker" subtitle="Real-time status of your vehicle's service.">
-        <div className="flex h-64 items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-        </div>
-      </CustomerLayout>
+      <AppLayout
+        title="Job tracker"
+        subtitle="Real-time status of your vehicle's service."
+        navLinks={customerNav}
+      >
+        <LoadingPage />
+      </AppLayout>
     );
   }
 
   if (!jobCard) {
     return (
-      <CustomerLayout title="Job Tracker" subtitle="Real-time status of your vehicle's service.">
-        <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-slate-500">Job card not found or access denied.</p>
-          <Link to="/customer/bookings" className="mt-4 text-blue-600 hover:underline">Back to Appointments</Link>
-        </div>
-      </CustomerLayout>
+      <AppLayout
+        title="Job tracker"
+        subtitle="Real-time status of your vehicle's service."
+        navLinks={customerNav}
+      >
+        <EmptyState
+          icon={Briefcase}
+          title="Job card not found"
+          description="This job may not exist or you may not have access."
+          actionLabel="Back to appointments"
+          actionTo="/customer/bookings"
+        />
+      </AppLayout>
     );
   }
 
-  const steps = ["created", "in_progress", "completed"];
+  const steps = ['created', 'in_progress', 'completed'];
   const currentStepIndex = steps.indexOf(jobCard.status);
 
   return (
-    <CustomerLayout title={`Tracking Job #${id?.slice(0,8)}`} subtitle="Real-time status of your vehicle's service.">
-      <Link to="/customer/bookings" className="mb-6 flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition">
-        <ArrowLeft size={16} className="mr-2" />
-        Back to Appointments
-      </Link>
+    <AppLayout
+      title={`Tracking job #${id?.slice(0, 8)}`}
+      subtitle="Real-time status of your vehicle's service."
+      navLinks={customerNav}
+    >
+      <div style={{ marginBottom: '24px' }}>
+        <TextLink to="/customer/bookings">← Back to appointments</TextLink>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Main Status Column */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Progress Tracker */}
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900 mb-8">Service Progress</h2>
-            
-            <div className="relative">
-              <div className="absolute left-[28px] top-0 bottom-0 w-1 bg-slate-100 rounded-full"></div>
-              <div 
-                className="absolute left-[28px] top-0 w-1 bg-blue-600 rounded-full transition-all duration-1000"
-                style={{ height: currentStepIndex === 0 ? '10%' : currentStepIndex === 1 ? '50%' : '100%' }}
-              ></div>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '24px',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <Card>
+            <p style={{ margin: '0 0 24px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Service progress
+            </p>
 
-              <ul className="space-y-12 relative z-10">
-                <li className="flex items-start gap-6">
-                  <div className={`h-14 w-14 shrink-0 rounded-full border-4 flex items-center justify-center ${currentStepIndex >= 0 ? 'border-white bg-blue-600 text-white' : 'border-white bg-slate-200 text-slate-400'}`}>
-                    <Clock size={24} />
-                  </div>
-                  <div className="pt-2">
-                    <h3 className={`text-lg font-bold ${currentStepIndex >= 0 ? 'text-slate-900' : 'text-slate-400'}`}>Vehicle Dropped Off</h3>
-                    <p className="text-sm text-slate-500 mt-1">Your vehicle has been checked in and a job card is created.</p>
-                  </div>
-                </li>
-                
-                <li className="flex items-start gap-6">
-                  <div className={`h-14 w-14 shrink-0 rounded-full border-4 flex items-center justify-center ${currentStepIndex >= 1 ? 'border-white bg-blue-600 text-white' : 'border-white bg-slate-200 text-slate-400'}`}>
-                    <Wrench size={24} />
-                  </div>
-                  <div className="pt-2">
-                    <h3 className={`text-lg font-bold ${currentStepIndex >= 1 ? 'text-slate-900' : 'text-slate-400'}`}>Service In Progress</h3>
-                    <p className="text-sm text-slate-500 mt-1">Our mechanics are currently working on your vehicle.</p>
-                  </div>
-                </li>
+            <div style={{ position: 'relative', paddingLeft: '8px' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '19px',
+                  top: '12px',
+                  bottom: '12px',
+                  width: '2px',
+                  backgroundColor: 'var(--border)',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  left: '19px',
+                  top: '12px',
+                  width: '2px',
+                  backgroundColor: 'var(--accent)',
+                  height:
+                    currentStepIndex <= 0
+                      ? '10%'
+                      : currentStepIndex === 1
+                        ? '50%'
+                        : '100%',
+                  transition: 'height 0.5s ease',
+                }}
+              />
 
-                <li className="flex items-start gap-6">
-                  <div className={`h-14 w-14 shrink-0 rounded-full border-4 flex items-center justify-center ${currentStepIndex >= 2 ? 'border-white bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'border-white bg-slate-200 text-slate-400'}`}>
-                    <CheckCircle size={24} />
-                  </div>
-                  <div className="pt-2">
-                    <h3 className={`text-lg font-bold ${currentStepIndex >= 2 ? 'text-emerald-600' : 'text-slate-400'}`}>Ready for Pickup</h3>
-                    <p className="text-sm text-slate-500 mt-1">Service is fully completed and your vehicle is ready to go!</p>
-                  </div>
-                </li>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', position: 'relative' }}>
+                {STEPS.map((step, index) => {
+                  const done = currentStepIndex >= index;
+                  const Icon = step.icon;
+                  return (
+                    <li
+                      key={step.key}
+                      style={{
+                        display: 'flex',
+                        gap: '16px',
+                        marginBottom: index < STEPS.length - 1 ? '32px' : 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '40px',
+                          flexShrink: 0,
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: done ? 'var(--accent)' : 'var(--bg-hover)',
+                          border: `2px solid ${done ? 'var(--accent)' : 'var(--border)'}`,
+                          color: done ? 'white' : 'var(--text-muted)',
+                        }}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <div style={{ paddingTop: '4px' }}>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: done ? 'var(--text-primary)' : 'var(--text-muted)',
+                          }}
+                        >
+                          {step.title}
+                        </p>
+                        <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                          {step.desc}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
-          </div>
+          </Card>
 
-          {/* Tasks List */}
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900 mb-6">Service Tasks</h2>
-            {(!jobCard.tasks || jobCard.tasks.length === 0) ? (
-              <p className="text-sm text-slate-500 py-4 text-center border border-dashed border-slate-200 rounded-lg">No specific tasks added yet.</p>
-            ) : (
-              <ul className="divide-y divide-slate-100">
-                {jobCard.tasks.map((task: any) => (
-                  <li key={task.id} className="py-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {task.status === 'completed' ? (
-                        <CheckCircle size={20} className="text-emerald-500 shrink-0" />
-                      ) : (
-                        <Settings size={20} className="text-slate-300 shrink-0" />
-                      )}
-                      <span className={`font-medium ${task.status === 'completed' ? 'text-slate-800' : 'text-slate-600'}`}>{task.task_description}</span>
-                    </div>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold tracking-wide border ${task.status === 'completed' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
-                      {task.status.toUpperCase()}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* Info Sidebar */}
-        <div className="space-y-6">
-          <div className="rounded-xl border border-slate-200 bg-slate-900 p-6 shadow-sm text-white">
-            <h2 className="text-sm font-bold tracking-wider text-slate-400 uppercase mb-4">Mechanic Notes</h2>
-            <p className="text-sm leading-relaxed text-slate-200">
-              {jobCard.notes || "No notes provided yet."}
+          <Card>
+            <p style={{ margin: '0 0 16px', fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Service tasks
             </p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-bold tracking-wider text-slate-500 uppercase mb-4 flex items-center gap-2">
-              <Package size={16} /> Used Parts
-            </h2>
-            {(!jobCard.parts || jobCard.parts.length === 0) ? (
-              <p className="text-sm text-slate-500">No parts required.</p>
+            {!jobCard.tasks || jobCard.tasks.length === 0 ? (
+              <p
+                style={{
+                  margin: 0,
+                  padding: '24px',
+                  textAlign: 'center',
+                  fontSize: '13px',
+                  color: 'var(--text-secondary)',
+                  border: '1px dashed var(--border)',
+                  borderRadius: 'var(--radius)',
+                }}
+              >
+                No specific tasks added yet.
+              </p>
             ) : (
-              <ul className="space-y-3">
-                {jobCard.parts.map((p: any) => (
-                  <li key={p.id} className="flex justify-between items-center text-sm">
-                    <span className="font-medium text-slate-700">{p.part_name}</span>
-                    <span className="text-slate-500 bg-slate-100 px-2 rounded-md">Qty: {p.quantity}</span>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {jobCard.tasks.map((task: any, i: number) => (
+                  <li
+                    key={task.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '12px 0',
+                      borderBottom:
+                        i < jobCard.tasks.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {task.task_description}
+                    </span>
+                    <StatusBadge status={task.status} />
                   </li>
                 ))}
               </ul>
             )}
-          </div>
+          </Card>
         </div>
 
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <Card>
+            <SectionLabel>Mechanic notes</SectionLabel>
+            <p style={{ margin: 0, fontSize: '13px', lineHeight: 1.6, color: 'var(--text-secondary)' }}>
+              {jobCard.notes || 'No notes provided yet.'}
+            </p>
+          </Card>
+
+          <Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Package size={14} color="var(--text-muted)" />
+              <SectionLabel>Used parts</SectionLabel>
+            </div>
+            {!jobCard.parts || jobCard.parts.length === 0 ? (
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>No parts required.</p>
+            ) : (
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                {jobCard.parts.map((p: any, i: number) => (
+                  <li
+                    key={p.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      padding: '8px 0',
+                      borderBottom:
+                        i < jobCard.parts.length - 1 ? '1px solid var(--border-subtle)' : 'none',
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{p.part_name}</span>
+                    <span style={{ color: 'var(--text-secondary)' }}>Qty: {p.quantity}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
       </div>
-    </CustomerLayout>
+    </AppLayout>
   );
 }

@@ -1,16 +1,41 @@
-import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import MechanicLayout from "../../components/MechanicLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { mechanicNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import StatusBadge from '../../components/ui/StatusBadge';
+import {
+  Card,
+  SectionLabel,
+  SecondaryButton,
+  TextSelect,
+} from '../../components/ui/primitives';
+import { ArrowLeft } from 'lucide-react';
+
+const TASK_CYCLE: Record<string, string> = {
+  pending: 'in_progress',
+  in_progress: 'completed',
+  completed: 'pending',
+};
+
+const listItemStyle = {
+  display: 'flex',
+  flexWrap: 'wrap' as const,
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: '8px',
+  padding: '12px 0',
+  borderBottom: '1px solid var(--border-subtle)',
+};
 
 export default function MechanicJobCardDetail() {
   const { id } = useParams();
   const [job, setJob] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [updatingTask, setUpdatingTask] = useState<string | null>(null);
+  const [updatingJob, setUpdatingJob] = useState(false);
 
   const fetchJob = async () => {
     const res = await api.get(`/job-cards/${id}`);
@@ -22,7 +47,7 @@ export default function MechanicJobCardDetail() {
       try {
         await fetchJob();
       } catch {
-        toast.error("Failed to load job card");
+        toast.error('Failed to load job card');
       } finally {
         setLoading(false);
       }
@@ -30,112 +55,136 @@ export default function MechanicJobCardDetail() {
     load();
   }, [id]);
 
-  const updateTaskStatus = async (taskId: string, status: string) => {
+  const cycleTaskStatus = async (task: { id: string; status: string }) => {
+    const next = TASK_CYCLE[task.status] || 'in_progress';
+    setUpdatingTask(task.id);
     try {
-      await api.patch(`/job-cards/tasks/${taskId}/status`, { status });
-      toast.success("Task updated");
-      fetchJob();
+      await api.patch(`/job-cards/tasks/${task.id}/status`, { status: next });
+      toast.success('Task updated');
+      await fetchJob();
     } catch {
-      toast.error("Failed to update task");
+      toast.error('Failed to update task');
+    } finally {
+      setUpdatingTask(null);
     }
   };
 
   const updateJobStatus = async (status: string) => {
+    setUpdatingJob(true);
     try {
       await api.patch(`/job-cards/${id}/status`, { status });
-      toast.success("Job status updated");
-      fetchJob();
+      toast.success('Job status updated');
+      await fetchJob();
     } catch {
-      toast.error("Failed to update job status");
+      toast.error('Failed to update job status');
+    } finally {
+      setUpdatingJob(false);
     }
   };
 
   if (loading) {
     return (
-      <MechanicLayout title="Job card" subtitle="Job details.">
+      <AppLayout title="Job card" subtitle="Job details." navLinks={mechanicNav}>
         <LoadingPage />
-      </MechanicLayout>
+      </AppLayout>
     );
   }
 
   if (!job) {
     return (
-      <MechanicLayout title="Job card" subtitle="Job details.">
-        <p className="text-sm text-gray-400">Job card not found.</p>
-      </MechanicLayout>
+      <AppLayout title="Job card" subtitle="Job details." navLinks={mechanicNav}>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Job card not found.</p>
+      </AppLayout>
     );
   }
 
   return (
-    <MechanicLayout title="Job card" subtitle={`#${id?.slice(0, 8)}`}>
+    <AppLayout title="Job card" subtitle={`#${id?.slice(0, 8)}`} navLinks={mechanicNav}>
       <Link
         to="/mechanic/job-cards"
-        className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-900"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginBottom: '24px',
+          fontSize: '13px',
+          color: 'var(--text-secondary)',
+          textDecoration: 'none',
+        }}
       >
-        <ArrowLeft size={16} className="mr-1" />
+        <ArrowLeft size={15} />
         Back to job cards
       </Link>
 
-      <div className="mb-6 rounded-xl border border-gray-100 bg-white p-6">
-        <p className="text-sm text-gray-700">
+      <Card style={{ marginBottom: '24px' }}>
+        <SectionLabel>Vehicle & service</SectionLabel>
+        <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--text-primary)' }}>
           {job.year} {job.make} {job.model} · {job.license_plate}
         </p>
-        <p className="mt-1 text-sm text-gray-500">{job.service_type}</p>
-        <div className="mt-4">
-          <StatusBadge status={job.status} />
-        </div>
-        <select
-          value={job.status}
-          onChange={(e) => updateJobStatus(e.target.value)}
-          className="mt-4 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>{job.service_type}</p>
+        <div
+          style={{
+            marginTop: '16px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: '12px',
+          }}
         >
-          <option value="open">Open</option>
-          <option value="in_progress">In progress</option>
-          <option value="completed">Completed</option>
-        </select>
-      </div>
+          <StatusBadge status={job.status} />
+          <TextSelect
+            value={job.status}
+            disabled={updatingJob}
+            onChange={(e) => updateJobStatus(e.target.value)}
+            style={{ width: 'auto', minWidth: '140px' }}
+          >
+            <option value="open">Open</option>
+            <option value="in_progress">In progress</option>
+            <option value="completed">Completed</option>
+          </TextSelect>
+        </div>
+      </Card>
 
-      <div className="mb-6 rounded-xl border border-gray-100 bg-white p-6">
-        <p className="mb-4 text-xs font-medium uppercase tracking-widest text-gray-400">
-          Tasks
-        </p>
-        <ul className="divide-y divide-gray-100">
-          {(job.tasks || []).map((t: any) => (
-            <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-              <span className="text-sm text-gray-700">{t.description}</span>
-              <select
-                value={t.status}
-                onChange={(e) => updateTaskStatus(t.id, e.target.value)}
-                className="rounded-lg border border-gray-200 px-2 py-1 text-xs"
-              >
-                <option value="pending">Pending</option>
-                <option value="in_progress">In progress</option>
-                <option value="completed">Completed</option>
-              </select>
-            </li>
-          ))}
-        </ul>
-        {(!job.tasks || job.tasks.length === 0) && (
-          <p className="text-sm text-gray-400">No tasks yet.</p>
+      <Card style={{ marginBottom: '24px' }}>
+        <SectionLabel>Tasks</SectionLabel>
+        {(job.tasks || []).length === 0 ? (
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>No tasks assigned yet.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {(job.tasks || []).map((t: any) => (
+              <li key={t.id} style={listItemStyle}>
+                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{t.description}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <StatusBadge status={t.status} />
+                  <SecondaryButton
+                    disabled={updatingTask === t.id}
+                    onClick={() => cycleTaskStatus(t)}
+                    style={{ padding: '4px 12px', fontSize: '12px' }}
+                  >
+                    {updatingTask === t.id ? 'Updating…' : 'Toggle status'}
+                  </SecondaryButton>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
+      </Card>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-6">
-        <p className="mb-4 text-xs font-medium uppercase tracking-widest text-gray-400">
-          Parts used
-        </p>
-        <ul className="divide-y divide-gray-100">
-          {(job.parts || []).map((p: any) => (
-            <li key={p.id} className="flex justify-between py-3 text-sm text-gray-700">
-              <span>{p.part_name}</span>
-              <span className="text-gray-400">Qty {p.quantity_used}</span>
-            </li>
-          ))}
-        </ul>
-        {(!job.parts || job.parts.length === 0) && (
-          <p className="text-sm text-gray-400">No parts recorded.</p>
+      <Card>
+        <SectionLabel>Parts used</SectionLabel>
+        {(job.parts || []).length === 0 ? (
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>No parts recorded.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {(job.parts || []).map((p: any) => (
+              <li key={p.id} style={listItemStyle}>
+                <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{p.part_name}</span>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Qty {p.quantity_used}</span>
+              </li>
+            ))}
+          </ul>
         )}
-      </div>
-    </MechanicLayout>
+      </Card>
+    </AppLayout>
   );
 }

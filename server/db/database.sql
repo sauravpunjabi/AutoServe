@@ -120,3 +120,19 @@ CREATE TABLE IF NOT EXISTS invoices (
   status VARCHAR DEFAULT 'unpaid' CHECK (status IN ('paid','unpaid')),
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_service_bookings_customer_id ON service_bookings(customer_id);
+CREATE INDEX IF NOT EXISTS idx_service_bookings_service_center_id ON service_bookings(service_center_id);
+CREATE INDEX IF NOT EXISTS idx_job_cards_mechanic_id ON job_cards(mechanic_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_service_center_id ON inventory(service_center_id);
+CREATE INDEX IF NOT EXISTS idx_users_service_center_id ON users(service_center_id);
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  token VARCHAR UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_token ON password_resets(token);

@@ -1,11 +1,13 @@
-import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import EmptyState from "../../components/ui/EmptyState";
-import { useManagerCenter } from "../../hooks/useManagerCenter";
-import { Star } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import EmptyState from '../../components/ui/EmptyState';
+import { useManagerCenter } from '../../hooks/useManagerCenter';
+import { Star } from 'lucide-react';
+import { Card } from '../../components/ui/primitives';
 
 export default function ManagerReviews() {
   const { centerId, loading: centerLoading } = useManagerCenter();
@@ -22,7 +24,7 @@ export default function ManagerReviews() {
         const res = await api.get(`/service-centers/${centerId}`);
         setReviews(res.data.data?.reviews || []);
       } catch {
-        toast.error("Failed to load reviews");
+        toast.error('Failed to load reviews');
       } finally {
         setLoading(false);
       }
@@ -32,14 +34,14 @@ export default function ManagerReviews() {
 
   if (loading || centerLoading) {
     return (
-      <ManagerLayout title="Reviews" subtitle="Customer feedback for your center.">
+      <AppLayout title="Reviews" subtitle="Customer feedback for your center." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   return (
-    <ManagerLayout title="Reviews" subtitle="Customer feedback for your center.">
+    <AppLayout title="Reviews" subtitle="Customer feedback for your center." navLinks={managerNav}>
       {reviews.length === 0 ? (
         <EmptyState
           icon={Star}
@@ -47,28 +49,29 @@ export default function ManagerReviews() {
           description="Reviews from customers will appear here."
         />
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {reviews.map((r) => (
-            <div
-              key={r.id}
-              className="rounded-xl border border-gray-100 bg-white p-6"
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-900">{r.customer_name}</p>
-                <p className="text-sm text-gray-400">
+            <Card key={r.id}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <p style={{ margin: 0, fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
+                  {r.customer_name}
+                </p>
+                <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
                   {new Date(r.created_at).toLocaleDateString()}
                 </p>
               </div>
-              <p className="mt-2 text-sm text-amber-600">
-                {"★".repeat(r.rating)}{"☆".repeat(5 - r.rating)}
+              <p style={{ margin: '8px 0 0', fontSize: '13px', fontWeight: 500, color: 'var(--accent)' }}>
+                {r.rating} / 5
               </p>
               {r.comment && (
-                <p className="mt-3 text-sm text-gray-700">{r.comment}</p>
+                <p style={{ margin: '12px 0 0', fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  {r.comment}
+                </p>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}
-    </ManagerLayout>
+    </AppLayout>
   );
 }

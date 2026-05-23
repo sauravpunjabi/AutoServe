@@ -1,12 +1,22 @@
-import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { useManagerCenter } from "../../hooks/useManagerCenter";
-import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { useManagerCenter } from '../../hooks/useManagerCenter';
+import { ArrowLeft } from 'lucide-react';
+import {
+  Card,
+  SectionLabel,
+  TextInput,
+  TextSelect,
+  PrimaryButton,
+  SecondaryButton,
+  Mono,
+} from '../../components/ui/primitives';
 
 export default function ManagerJobCardDetail() {
   const { id } = useParams();
@@ -15,10 +25,15 @@ export default function ManagerJobCardDetail() {
   const [mechanics, setMechanics] = useState<any[]>([]);
   const [inventory, setInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [taskDesc, setTaskDesc] = useState("");
-  const [partId, setPartId] = useState("");
+  const [taskDesc, setTaskDesc] = useState('');
+  const [partId, setPartId] = useState('');
   const [partQty, setPartQty] = useState(1);
-  const [laborCost, setLaborCost] = useState("");
+  const [laborCost, setLaborCost] = useState('');
+  const [submittingTask, setSubmittingTask] = useState(false);
+  const [submittingPart, setSubmittingPart] = useState(false);
+  const [submittingInvoice, setSubmittingInvoice] = useState(false);
+  const [submittingMechanic, setSubmittingMechanic] = useState(false);
+  const [submittingStatus, setSubmittingStatus] = useState(false);
 
   const fetchJob = async () => {
     const res = await api.get(`/job-cards/${id}`);
@@ -34,11 +49,11 @@ export default function ManagerJobCardDetail() {
             api.get(`/service-centers/${centerId}/mechanics`),
             api.get(`/inventory/${centerId}`),
           ]);
-          setMechanics((mechRes.data.data || []).filter((m: any) => m.status === "active"));
+          setMechanics((mechRes.data.data || []).filter((m: any) => m.status === 'active'));
           setInventory(invRes.data.data || []);
         }
       } catch {
-        toast.error("Failed to load job card");
+        toast.error('Failed to load job card');
       } finally {
         setLoading(false);
       }
@@ -47,117 +62,150 @@ export default function ManagerJobCardDetail() {
   }, [id, centerId]);
 
   const assignMechanic = async (mechanicId: string) => {
+    setSubmittingMechanic(true);
     try {
       await api.patch(`/job-cards/${id}/mechanic`, { mechanic_id: mechanicId });
-      toast.success("Mechanic assigned");
+      toast.success('Mechanic assigned');
       fetchJob();
     } catch {
-      toast.error("Failed to assign mechanic");
+      toast.error('Failed to assign mechanic');
+    } finally {
+      setSubmittingMechanic(false);
     }
   };
 
   const updateJobStatus = async (status: string) => {
+    setSubmittingStatus(true);
     try {
       await api.patch(`/job-cards/${id}/status`, { status });
-      toast.success("Status updated");
+      toast.success('Status updated');
       fetchJob();
     } catch {
-      toast.error("Failed to update status");
+      toast.error('Failed to update status');
+    } finally {
+      setSubmittingStatus(false);
     }
   };
 
   const addTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskDesc.trim()) return;
+    setSubmittingTask(true);
     try {
       await api.post(`/job-cards/${id}/tasks`, { description: taskDesc });
-      toast.success("Task added");
-      setTaskDesc("");
-      fetchJob();
+      toast.success('Task added');
+      setTaskDesc('');
+      await fetchJob();
     } catch {
-      toast.error("Failed to add task");
+      toast.error('Failed to add task');
+    } finally {
+      setSubmittingTask(false);
     }
   };
 
   const addPart = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!partId || !centerId) return;
+    setSubmittingPart(true);
     try {
       await api.post(`/inventory/job-parts/${id}`, {
         part_id: partId,
         quantity_used: partQty,
         service_center_id: centerId,
       });
-      toast.success("Part added");
-      setPartId("");
+      toast.success('Part added');
+      setPartId('');
       setPartQty(1);
-      fetchJob();
+      await fetchJob();
       const invRes = await api.get(`/inventory/${centerId}`);
       setInventory(invRes.data.data || []);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to add part");
+      toast.error(err.response?.data?.message || 'Failed to add part');
+    } finally {
+      setSubmittingPart(false);
     }
   };
 
   const generateInvoice = async () => {
+    setSubmittingInvoice(true);
     try {
-      await api.post("/misc/invoices", {
+      await api.post('/misc/invoices', {
         job_card_id: id,
         booking_id: job.booking_id,
         customer_id: job.customer_id,
         labor_cost: Number(laborCost) || 0,
       });
-      toast.success("Invoice generated");
-    } catch {
-      toast.error("Failed to generate invoice");
+      toast.success('Invoice generated');
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || 'Failed to generate invoice');
+    } finally {
+      setSubmittingInvoice(false);
     }
   };
 
   if (loading) {
     return (
-      <ManagerLayout title="Job card" subtitle="Job details.">
+      <AppLayout title="Job card" subtitle="Job details." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   if (!job) {
     return (
-      <ManagerLayout title="Job card" subtitle="Job details.">
-        <p className="text-sm text-gray-400">Job card not found.</p>
-      </ManagerLayout>
+      <AppLayout title="Job card" subtitle="Job details." navLinks={managerNav}>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Job card not found.</p>
+      </AppLayout>
     );
   }
 
+  const rowDivider: React.CSSProperties = {
+    borderBottom: '1px solid var(--border-subtle)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '12px 0',
+    fontSize: '13px',
+  };
+
   return (
-    <ManagerLayout title="Job card" subtitle={`#${id?.slice(0, 8)}`}>
+    <AppLayout title="Job card" subtitle={`#${id?.slice(0, 8)}`} navLinks={managerNav}>
       <Link
         to="/manager/job-cards"
-        className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-900"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginBottom: '24px',
+          fontSize: '13px',
+          color: 'var(--text-secondary)',
+          textDecoration: 'none',
+        }}
       >
-        <ArrowLeft size={16} className="mr-1" />
+        <ArrowLeft size={16} />
         Back to job cards
       </Link>
 
-      <div className="mb-6 rounded-xl border border-gray-100 bg-white p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <Card style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
           <div>
-            <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
-              Booking ref
-            </p>
-            <p className="mt-1 font-mono text-xs text-gray-700">{job.booking_id?.slice(0, 8)}</p>
-            <p className="mt-3 text-sm text-gray-700">
+            <SectionLabel>Booking ref</SectionLabel>
+            <Mono>{job.booking_id?.slice(0, 8)}</Mono>
+            <p style={{ margin: '12px 0 0', fontSize: '13px', color: 'var(--text-primary)' }}>
               {job.year} {job.make} {job.model} · {job.license_plate}
             </p>
-            <p className="text-sm text-gray-500">{job.customer_name}</p>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+              {job.customer_name}
+            </p>
           </div>
           <StatusBadge status={job.status} />
         </div>
-        <div className="mt-6 flex flex-wrap gap-4">
-          <select
-            value={job.mechanic_id || ""}
+        <div style={{ marginTop: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          <TextSelect
+            value={job.mechanic_id || ''}
+            disabled={submittingMechanic}
             onChange={(e) => e.target.value && assignMechanic(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            style={{ width: 'auto', minWidth: '180px' }}
           >
             <option value="">Assign mechanic</option>
             {mechanics.map((m) => (
@@ -165,64 +213,63 @@ export default function ManagerJobCardDetail() {
                 {m.name}
               </option>
             ))}
-          </select>
-          <select
+          </TextSelect>
+          <TextSelect
             value={job.status}
+            disabled={submittingStatus}
             onChange={(e) => updateJobStatus(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            style={{ width: 'auto', minWidth: '160px' }}
           >
             <option value="open">Open</option>
             <option value="in_progress">In progress</option>
             <option value="completed">Completed</option>
-          </select>
+          </TextSelect>
+          {(submittingMechanic || submittingStatus) && (
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', alignSelf: 'center' }}>
+              Updating…
+            </span>
+          )}
         </div>
-      </div>
+      </Card>
 
-      <div className="mb-6 rounded-xl border border-gray-100 bg-white p-6">
-        <p className="mb-4 text-xs font-medium uppercase tracking-widest text-gray-400">
-          Tasks
-        </p>
-        <ul className="mb-4 divide-y divide-gray-100">
+      <Card style={{ marginBottom: '24px' }}>
+        <SectionLabel>Tasks</SectionLabel>
+        <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0 }}>
           {(job.tasks || []).map((t: any) => (
-            <li key={t.id} className="flex items-center justify-between py-3 text-sm">
-              <span className="text-gray-700">{t.description}</span>
+            <li key={t.id} style={rowDivider}>
+              <span style={{ color: 'var(--text-primary)' }}>{t.description}</span>
               <StatusBadge status={t.status} />
             </li>
           ))}
         </ul>
-        <form onSubmit={addTask} className="flex gap-2">
-          <input
+        <form onSubmit={addTask} style={{ display: 'flex', gap: '8px' }}>
+          <TextInput
             value={taskDesc}
             onChange={(e) => setTaskDesc(e.target.value)}
             placeholder="New task description"
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            style={{ flex: 1 }}
           />
-          <button
-            type="submit"
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            Add
-          </button>
+          <PrimaryButton type="submit" disabled={submittingTask}>
+            {submittingTask ? 'Adding…' : 'Add'}
+          </PrimaryButton>
         </form>
-      </div>
+      </Card>
 
-      <div className="mb-6 rounded-xl border border-gray-100 bg-white p-6">
-        <p className="mb-4 text-xs font-medium uppercase tracking-widest text-gray-400">
-          Parts used
-        </p>
-        <ul className="mb-4 divide-y divide-gray-100">
+      <Card style={{ marginBottom: '24px' }}>
+        <SectionLabel>Parts used</SectionLabel>
+        <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0 }}>
           {(job.parts || []).map((p: any) => (
-            <li key={p.id} className="flex justify-between py-3 text-sm text-gray-700">
-              <span>{p.part_name}</span>
-              <span className="text-gray-400">Qty {p.quantity_used}</span>
+            <li key={p.id} style={rowDivider}>
+              <span style={{ color: 'var(--text-primary)' }}>{p.part_name}</span>
+              <span style={{ color: 'var(--text-muted)' }}>Qty {p.quantity_used}</span>
             </li>
           ))}
         </ul>
-        <form onSubmit={addPart} className="flex flex-wrap gap-2">
-          <select
+        <form onSubmit={addPart} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <TextSelect
             value={partId}
             onChange={(e) => setPartId(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            style={{ flex: '1 1 200px' }}
           >
             <option value="">Select part</option>
             {inventory.map((i) => (
@@ -230,45 +277,37 @@ export default function ManagerJobCardDetail() {
                 {i.name} (stock: {i.quantity})
               </option>
             ))}
-          </select>
-          <input
+          </TextSelect>
+          <TextInput
             type="number"
             min={1}
             value={partQty}
             onChange={(e) => setPartQty(Number(e.target.value))}
-            className="w-20 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            style={{ width: '80px' }}
           />
-          <button
-            type="submit"
-            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Add part
-          </button>
+          <SecondaryButton type="submit" disabled={submittingPart}>
+            {submittingPart ? 'Adding…' : 'Add part'}
+          </SecondaryButton>
         </form>
-      </div>
+      </Card>
 
-      {job.status === "completed" && (
-        <div className="rounded-xl border border-gray-100 bg-white p-6">
-          <p className="mb-3 text-xs font-medium uppercase tracking-widest text-gray-400">
-            Generate invoice
-          </p>
-          <div className="flex gap-2">
-            <input
+      {job.status === 'completed' && (
+        <Card>
+          <SectionLabel>Generate invoice</SectionLabel>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <TextInput
               type="number"
               placeholder="Labor cost"
               value={laborCost}
               onChange={(e) => setLaborCost(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              style={{ width: '160px' }}
             />
-            <button
-              onClick={generateInvoice}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-            >
-              Generate invoice
-            </button>
+            <PrimaryButton type="button" onClick={generateInvoice} disabled={submittingInvoice}>
+              {submittingInvoice ? 'Generating…' : 'Generate invoice'}
+            </PrimaryButton>
           </div>
-        </div>
+        </Card>
       )}
-    </ManagerLayout>
+    </AppLayout>
   );
 }

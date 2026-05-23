@@ -1,32 +1,45 @@
-import { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { ArrowLeft } from 'lucide-react';
+import { Card, SectionLabel, TextSelect, TextLink, Mono } from '../../components/ui/primitives';
+
+const dtStyle: React.CSSProperties = {
+  fontSize: '12px',
+  color: 'var(--text-muted)',
+  margin: 0,
+};
+
+const ddStyle: React.CSSProperties = {
+  fontSize: '13px',
+  color: 'var(--text-primary)',
+  margin: '4px 0 0',
+};
 
 export default function ManagerBookingDetail() {
   const { id } = useParams();
   const [booking, setBooking] = useState<any>(null);
   const [jobCardId, setJobCardId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [submittingStatus, setSubmittingStatus] = useState(false);
 
   useEffect(() => {
     const fetchBooking = async () => {
       try {
         const res = await api.get(`/bookings/${id}`);
         setBooking(res.data.data);
-        if (res.data.data?.status === "approved") {
-          const jobsRes = await api.get("/job-cards");
-          const job = (jobsRes.data.data || []).find(
-            (j: any) => j.booking_id === id
-          );
+        if (res.data.data?.status === 'approved') {
+          const jobsRes = await api.get('/job-cards');
+          const job = (jobsRes.data.data || []).find((j: any) => j.booking_id === id);
           if (job) setJobCardId(job.id);
         }
       } catch {
-        toast.error("Failed to load booking");
+        toast.error('Failed to load booking');
       } finally {
         setLoading(false);
       }
@@ -35,121 +48,127 @@ export default function ManagerBookingDetail() {
   }, [id]);
 
   const updateStatus = async (status: string) => {
+    setSubmittingStatus(true);
     try {
       await api.patch(`/bookings/${id}/status`, { status });
       toast.success(`Booking ${status}`);
       const res = await api.get(`/bookings/${id}`);
       setBooking(res.data.data);
-      if (status === "approved") {
-        const jobsRes = await api.get("/job-cards");
+      if (status === 'approved') {
+        const jobsRes = await api.get('/job-cards');
         const job = (jobsRes.data.data || []).find((j: any) => j.booking_id === id);
         if (job) setJobCardId(job.id);
       }
     } catch {
-      toast.error("Failed to update status");
+      toast.error('Failed to update status');
+    } finally {
+      setSubmittingStatus(false);
     }
   };
 
   if (loading) {
     return (
-      <ManagerLayout title="Booking" subtitle="Booking details.">
+      <AppLayout title="Booking" subtitle="Booking details." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   if (!booking) {
     return (
-      <ManagerLayout title="Booking" subtitle="Booking details.">
-        <p className="text-sm text-gray-400">Booking not found.</p>
-      </ManagerLayout>
+      <AppLayout title="Booking" subtitle="Booking details." navLinks={managerNav}>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>Booking not found.</p>
+      </AppLayout>
     );
   }
 
   return (
-    <ManagerLayout title="Booking" subtitle={`#${id?.slice(0, 8)}`}>
+    <AppLayout title="Booking" subtitle={`#${id?.slice(0, 8)}`} navLinks={managerNav}>
       <Link
         to="/manager/bookings"
-        className="mb-6 inline-flex items-center text-sm text-gray-500 hover:text-gray-900"
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          marginBottom: '24px',
+          fontSize: '13px',
+          color: 'var(--text-secondary)',
+          textDecoration: 'none',
+        }}
       >
-        <ArrowLeft size={16} className="mr-1" />
+        <ArrowLeft size={16} />
         Back to schedule
       </Link>
 
-      <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-        <div className="rounded-xl border border-gray-100 bg-white p-6">
-          <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
-            Booking
-          </p>
-          <dl className="mt-4 space-y-3 text-sm">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+        <Card>
+          <SectionLabel>Booking</SectionLabel>
+          <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
-              <dt className="text-gray-400">Service</dt>
-              <dd className="text-gray-900">{booking.service_type}</dd>
+              <dt style={dtStyle}>Service</dt>
+              <dd style={ddStyle}>{booking.service_type}</dd>
             </div>
             <div>
-              <dt className="text-gray-400">Date</dt>
-              <dd className="text-gray-900">
+              <dt style={dtStyle}>Date</dt>
+              <dd style={ddStyle}>
                 {new Date(booking.booking_date).toLocaleDateString()} · {booking.time_slot?.slice?.(0, 5)}
               </dd>
             </div>
             <div>
-              <dt className="text-gray-400">Status</dt>
-              <dd className="mt-1">
+              <dt style={dtStyle}>Status</dt>
+              <dd style={{ margin: '4px 0 0' }}>
                 <StatusBadge status={booking.status} />
               </dd>
             </div>
             {booking.notes && (
               <div>
-                <dt className="text-gray-400">Notes</dt>
-                <dd className="text-gray-700">{booking.notes}</dd>
+                <dt style={dtStyle}>Notes</dt>
+                <dd style={{ ...ddStyle, color: 'var(--text-secondary)' }}>{booking.notes}</dd>
               </div>
             )}
           </dl>
-        </div>
+        </Card>
 
-        <div className="rounded-xl border border-gray-100 bg-white p-6">
-          <p className="text-xs font-medium uppercase tracking-widest text-gray-400">
-            Customer & vehicle
-          </p>
-          <dl className="mt-4 space-y-3 text-sm">
+        <Card>
+          <SectionLabel>Customer & vehicle</SectionLabel>
+          <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
-              <dt className="text-gray-400">Customer</dt>
-              <dd className="text-gray-900">{booking.customer_name}</dd>
+              <dt style={dtStyle}>Customer</dt>
+              <dd style={ddStyle}>{booking.customer_name}</dd>
             </div>
             <div>
-              <dt className="text-gray-400">Email</dt>
-              <dd className="text-gray-500">{booking.customer_email}</dd>
+              <dt style={dtStyle}>Email</dt>
+              <dd style={{ ...ddStyle, color: 'var(--text-secondary)' }}>{booking.customer_email}</dd>
             </div>
             <div>
-              <dt className="text-gray-400">Vehicle</dt>
-              <dd className="font-mono text-xs text-gray-900">
-                {booking.year} {booking.make} {booking.model} · {booking.license_plate}
+              <dt style={dtStyle}>Vehicle</dt>
+              <dd style={{ margin: '4px 0 0' }}>
+                <Mono>
+                  {booking.year} {booking.make} {booking.model} · {booking.license_plate}
+                </Mono>
               </dd>
             </div>
           </dl>
-        </div>
+        </Card>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
-        <select
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
+        <TextSelect
           value={booking.status}
+          disabled={submittingStatus}
           onChange={(e) => updateStatus(e.target.value)}
-          className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+          style={{ width: 'auto', minWidth: '160px' }}
         >
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
           <option value="completed">Completed</option>
-        </select>
-        {jobCardId && (
-          <Link
-            to={`/manager/job-cards/${jobCardId}`}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            View job card →
-          </Link>
+        </TextSelect>
+        {submittingStatus && (
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Updating…</span>
         )}
+        {jobCardId && <TextLink to={`/manager/job-cards/${jobCardId}`}>View job card →</TextLink>}
       </div>
-    </ManagerLayout>
+    </AppLayout>
   );
 }

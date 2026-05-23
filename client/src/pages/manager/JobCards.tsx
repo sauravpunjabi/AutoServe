@@ -1,12 +1,14 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import EmptyState from "../../components/ui/EmptyState";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { Briefcase } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import EmptyState from '../../components/ui/EmptyState';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { Briefcase } from 'lucide-react';
+import { TableWrap, thStyle, tdStyle, TableRow } from '../../components/ui/primitives';
 
 export default function ManagerJobCards() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -15,10 +17,10 @@ export default function ManagerJobCards() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await api.get("/job-cards");
+        const res = await api.get('/job-cards');
         setJobs(res.data.data || []);
       } catch {
-        toast.error("Failed to load job cards");
+        toast.error('Failed to load job cards');
       } finally {
         setLoading(false);
       }
@@ -28,14 +30,14 @@ export default function ManagerJobCards() {
 
   if (loading) {
     return (
-      <ManagerLayout title="Job cards" subtitle="Track active service work.">
+      <AppLayout title="Job cards" subtitle="Track active service work." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   return (
-    <ManagerLayout title="Job cards" subtitle="Track active service work.">
+    <AppLayout title="Job cards" subtitle="Track active service work." navLinks={managerNav}>
       {jobs.length === 0 ? (
         <EmptyState
           icon={Briefcase}
@@ -43,49 +45,50 @@ export default function ManagerJobCards() {
           description="Job cards are created when bookings are approved."
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-          <table className="w-full text-sm">
+        <TableWrap>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr className="border-b border-gray-100 text-left text-xs font-medium uppercase tracking-widest text-gray-400">
-                <th className="px-4 py-3">Job ID</th>
-                <th className="px-4 py-3">Date</th>
-                <th className="px-4 py-3">Service</th>
-                <th className="px-4 py-3">Mechanic</th>
-                <th className="px-4 py-3">Status</th>
+              <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                <th style={thStyle}>Job ID</th>
+                <th style={thStyle}>Date</th>
+                <th style={thStyle}>Service</th>
+                <th style={thStyle}>Mechanic</th>
+                <th style={thStyle}>Status</th>
               </tr>
             </thead>
             <tbody>
               {jobs.map((j) => (
-                <tr
-                  key={j.id}
-                  className="border-b border-gray-100 transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3">
+                <TableRow key={j.id}>
+                  <td style={tdStyle}>
                     <Link
                       to={`/manager/job-cards/${j.id}`}
-                      className="font-mono text-xs text-blue-600 hover:underline"
+                      style={{
+                        fontFamily: 'DM Mono, monospace',
+                        fontSize: '12px',
+                        color: 'var(--accent)',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                      }}
                     >
                       {j.id.slice(0, 8)}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-gray-700">
-                    {j.booking_date
-                      ? new Date(j.booking_date).toLocaleDateString()
-                      : "—"}
+                  <td style={tdStyle}>
+                    {j.booking_date ? new Date(j.booking_date).toLocaleDateString() : '—'}
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{j.service_type || "—"}</td>
-                  <td className="px-4 py-3 text-gray-500">
-                    {j.mechanic_name || "Unassigned"}
+                  <td style={tdStyle}>{j.service_type || '—'}</td>
+                  <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
+                    {j.mechanic_name || 'Unassigned'}
                   </td>
-                  <td className="px-4 py-3">
+                  <td style={tdStyle}>
                     <StatusBadge status={j.status} />
                   </td>
-                </tr>
+                </TableRow>
               ))}
             </tbody>
           </table>
-        </div>
+        </TableWrap>
       )}
-    </ManagerLayout>
+    </AppLayout>
   );
 }

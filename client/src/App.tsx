@@ -6,6 +6,9 @@ import "react-toastify/dist/ReactToastify.css";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Landing from "./pages/Landing";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerVehicles from "./pages/customer/Vehicles";
@@ -42,10 +45,13 @@ function App() {
       <Router>
         <ToastContainer position="top-right" autoClose={3000} />
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-          <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
+          <Route element={<ProtectedRoute roles={["customer"]} />}>
             <Route path="/customer/dashboard" element={<CustomerDashboard />} />
             <Route path="/customer/vehicles" element={<CustomerVehicles />} />
             <Route path="/customer/book-service" element={<CustomerBookService />} />
@@ -55,14 +61,14 @@ function App() {
             <Route path="/customer/service-centers" element={<CustomerServiceCenters />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["mechanic"]} />}>
+          <Route element={<ProtectedRoute roles={["mechanic"]} />}>
             <Route path="/mechanic/dashboard" element={<MechanicDashboard />} />
             <Route path="/mechanic/service-centers" element={<MechanicServiceCenters />} />
             <Route path="/mechanic/job-cards" element={<MechanicJobCards />} />
             <Route path="/mechanic/job-cards/:id" element={<MechanicJobCardDetail />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
+          <Route element={<ProtectedRoute roles={["manager"]} />}>
             <Route path="/manager/dashboard" element={<ManagerDashboard />} />
             <Route path="/manager/service-center/create" element={<ManagerCreateServiceCenter />} />
             <Route path="/manager/service-center/manage" element={<ManagerManageServiceCenter />} />
@@ -76,7 +82,7 @@ function App() {
             <Route path="/manager/reviews" element={<ManagerReviews />} />
           </Route>
 
-          <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+          <Route element={<ProtectedRoute roles={["admin"]} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/service-centers" element={<AdminServiceCenters />} />

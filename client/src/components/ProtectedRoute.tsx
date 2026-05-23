@@ -1,24 +1,17 @@
-import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import LoadingPage from "./ui/LoadingPage";
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import LoadingPage from './ui/LoadingPage';
 
 interface ProtectedRouteProps {
-  allowedRoles?: string[];
+  roles?: string[];
 }
 
-const roleHome: Record<string, string> = {
-  customer: "/customer/dashboard",
-  mechanic: "/mechanic/dashboard",
-  manager: "/manager/dashboard",
-  admin: "/admin/dashboard",
-};
-
-const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ roles }: ProtectedRouteProps) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
         <LoadingPage />
       </div>
     );
@@ -28,8 +21,8 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to={roleHome[user.role] || "/login"} replace />;
+  if (roles && !roles.includes(user.role)) {
+    return <Navigate to={`/${user.role}/dashboard`} replace />;
   }
 
   return <Outlet />;

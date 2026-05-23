@@ -1,23 +1,47 @@
-import ManagerLayout from "../../components/ManagerLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import EmptyState from "../../components/ui/EmptyState";
-import { useManagerCenter } from "../../hooks/useManagerCenter";
-import { Building2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import EmptyState from '../../components/ui/EmptyState';
+import { useManagerCenter } from '../../hooks/useManagerCenter';
+import api from '../../api/axios';
+import { Building2 } from 'lucide-react';
+import { Card, SectionLabel, TextLink, Mono } from '../../components/ui/primitives';
 
 export default function ManageServiceCenter() {
-  const { center, loading } = useManagerCenter();
+  const { centerId, loading: centerLoading } = useManagerCenter();
+  const [center, setCenter] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (loading) {
+  useEffect(() => {
+    const fetchCenter = async () => {
+      if (!centerId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await api.get(`/service-centers/${centerId}`);
+        setCenter(res.data.data);
+      } catch {
+        setCenter(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (!centerLoading) fetchCenter();
+  }, [centerId, centerLoading]);
+
+  if (centerLoading || loading) {
     return (
-      <ManagerLayout title="Service center" subtitle="Your center details.">
+      <AppLayout title="Service center" subtitle="Your center details." navLinks={managerNav}>
         <LoadingPage />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
-  if (!center) {
+  if (!centerId || !center) {
     return (
-      <ManagerLayout title="Service center" subtitle="Your center details.">
+      <AppLayout title="Service center" subtitle="Your center details." navLinks={managerNav}>
         <EmptyState
           icon={Building2}
           title="No service center"
@@ -25,32 +49,55 @@ export default function ManageServiceCenter() {
           actionLabel="Create center"
           actionTo="/manager/service-center/create"
         />
-      </ManagerLayout>
+      </AppLayout>
     );
   }
 
   const fields = [
-    { label: "Name", value: center.name },
-    { label: "Address", value: center.address },
-    { label: "Phone", value: center.phone },
-    { label: "Email", value: center.email },
+    { label: 'Name', value: center.name },
+    { label: 'Address', value: center.address },
+    { label: 'Phone', value: center.phone },
+    { label: 'Email', value: center.email },
+    {
+      label: 'Average rating',
+      value: `${Number(center.average_rating || 0).toFixed(1)} / 5`,
+    },
   ];
 
+  const dtStyle: React.CSSProperties = {
+    fontSize: '11px',
+    fontWeight: 500,
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    margin: 0,
+  };
+
+  const ddStyle: React.CSSProperties = {
+    fontSize: '13px',
+    color: 'var(--text-primary)',
+    margin: '6px 0 0',
+  };
+
   return (
-    <ManagerLayout title="Service center" subtitle="Your center details.">
-      <div className="rounded-xl border border-gray-100 bg-white p-6">
-        <dl className="space-y-4">
+    <AppLayout title="Service center" subtitle="Your center details." navLinks={managerNav}>
+      <Card>
+        <SectionLabel>Details</SectionLabel>
+        <dl style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {fields.map(({ label, value }) => (
             <div key={label}>
-              <dt className="text-xs font-medium uppercase tracking-widest text-gray-400">
-                {label}
-              </dt>
-              <dd className="mt-1 text-sm text-gray-700">{value}</dd>
+              <dt style={dtStyle}>{label}</dt>
+              <dd style={ddStyle}>{value}</dd>
             </div>
           ))}
         </dl>
-        <p className="mt-6 font-mono text-xs text-gray-400">ID: {center.id}</p>
-      </div>
-    </ManagerLayout>
+        <p style={{ margin: '24px 0 0', fontSize: '12px' }}>
+          <Mono>ID: {center.id}</Mono>
+        </p>
+        <div style={{ marginTop: '16px' }}>
+          <TextLink to="/manager/reviews">View customer reviews →</TextLink>
+        </div>
+      </Card>
+    </AppLayout>
   );
 }

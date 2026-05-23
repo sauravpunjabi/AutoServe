@@ -1,27 +1,30 @@
-import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import api from "../../api/axios";
-import MechanicLayout from "../../components/MechanicLayout";
-import LoadingPage from "../../components/ui/LoadingPage";
-import StatusBadge from "../../components/ui/StatusBadge";
-import { Building2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import api from '../../api/axios';
+import AppLayout from '../../components/AppLayout';
+import { mechanicNav } from '../../lib/nav';
+import LoadingPage from '../../components/ui/LoadingPage';
+import StatusBadge from '../../components/ui/StatusBadge';
+import { Card, PrimaryButton } from '../../components/ui/primitives';
+import { Building2 } from 'lucide-react';
 
 export default function MechanicServiceCenters() {
   const [centers, setCenters] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         const [centersRes, meRes] = await Promise.all([
-          api.get("/service-centers"),
-          api.get("/auth/me"),
+          api.get('/service-centers'),
+          api.get('/auth/me'),
         ]);
         setCenters(centersRes.data.data || []);
-        setProfile(meRes.data?.data ?? meRes.data);
+        setProfile(meRes.data.data ?? meRes.data);
       } catch {
-        toast.error("Failed to load centers");
+        toast.error('Failed to load centers');
       } finally {
         setLoading(false);
       }
@@ -30,64 +33,77 @@ export default function MechanicServiceCenters() {
   }, []);
 
   const requestJoin = async (centerId: string) => {
+    setJoiningId(centerId);
     try {
       await api.post(`/service-centers/${centerId}/join`);
-      toast.success("Join request sent");
-      const meRes = await api.get("/auth/me");
-      setProfile(meRes.data);
+      toast.success('Join request sent');
+      const meRes = await api.get('/auth/me');
+      setProfile(meRes.data.data ?? meRes.data);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send request");
+      toast.error(err.response?.data?.message || 'Failed to send request');
+    } finally {
+      setJoiningId(null);
     }
   };
 
   if (loading) {
     return (
-      <MechanicLayout title="Service centers" subtitle="Find a center to join.">
+      <AppLayout title="Service centers" subtitle="Find a center to join." navLinks={mechanicNav}>
         <LoadingPage />
-      </MechanicLayout>
+      </AppLayout>
     );
   }
 
   const joinedCenterId = profile?.service_center_id;
 
   return (
-    <MechanicLayout title="Service centers" subtitle="Find a center to join.">
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <AppLayout title="Service centers" subtitle="Find a center to join." navLinks={mechanicNav}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         {centers.map((c) => {
           const isJoined = joinedCenterId === c.id;
-          const isPending = isJoined && profile?.status === "pending";
-          const isActive = isJoined && profile?.status === "active";
+          const isPending = isJoined && profile?.status === 'pending';
+          const isActive = isJoined && profile?.status === 'active';
 
           return (
-            <div
-              key={c.id}
-              className="rounded-xl border border-gray-100 bg-white p-6"
-            >
-              <div className="flex items-start justify-between">
-                <Building2 className="h-5 w-5 text-gray-300" />
+            <Card key={c.id}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Building2 size={20} color="var(--text-muted)" strokeWidth={1.5} />
                 {isActive && <StatusBadge status="active" />}
                 {isPending && <StatusBadge status="pending" />}
               </div>
-              <h3 className="mt-3 text-sm font-semibold text-gray-900">{c.name}</h3>
-              <p className="mt-1 text-sm text-gray-500">{c.address}</p>
-              <p className="mt-2 text-xs text-gray-400">
-                Rating: {Number(c.average_rating).toFixed(1)} ★
+              <h3
+                style={{
+                  margin: '12px 0 4px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {c.name}
+              </h3>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)' }}>{c.address}</p>
+              <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
+                Rating: {Number(c.average_rating).toFixed(1)} / 5
               </p>
               {!joinedCenterId && (
-                <button
-                  onClick={() => requestJoin(c.id)}
-                  className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-                >
-                  Request to join
-                </button>
+                <div style={{ marginTop: '16px' }}>
+                  <PrimaryButton
+                    disabled={joiningId === c.id}
+                    onClick={() => requestJoin(c.id)}
+                  >
+                    {joiningId === c.id ? 'Sending request…' : 'Request to join'}
+                  </PrimaryButton>
+                </div>
               )}
               {isPending && (
-                <p className="mt-4 text-sm text-gray-400">Awaiting manager approval</p>
+                <p style={{ margin: '16px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                  Awaiting manager approval
+                </p>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>
-    </MechanicLayout>
+    </AppLayout>
   );
 }

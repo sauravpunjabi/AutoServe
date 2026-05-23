@@ -1,78 +1,89 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import api from "../api/axios";
-import { useAuth } from "../context/AuthContext";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
+import { AuthBrandPanel, AuthFormPanel } from '../components/AuthShell';
+import { TextInput, PrimaryButton } from '../components/ui/primitives';
 
 const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const { login } = useAuth();
-    const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const response = await api.post("/auth/login", { email, password });
-            login(response.data.token);
-            navigate(`/${response.data.user.role}/dashboard`);
-        } catch (err: any) {
-            setError(err.response?.data?.message || err.response?.data || "Login failed");
-        }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      const { token, user } = response.data;
+      login(token, { id: user.id, name: user.name, email: user.email, role: user.role });
+      navigate(`/${user.role}/dashboard`);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-gray-100">
-            <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
-                <h2 className="mb-6 text-center text-2xl font-bold text-gray-800">
-                    Login to AutoServe
-                </h2>
-                {error && (
-                    <div className="mb-4 rounded bg-red-100 p-2 text-center text-red-700">
-                        {error}
-                    </div>
-                )}
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="mb-2 block font-medium text-gray-700">Email</label>
-                        <input
-                            type="email"
-                            className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <div className="mb-6">
-                        <label className="mb-2 block font-medium text-gray-700">
-                            Password
-                        </label>
-                        <input
-                            type="password"
-                            className="w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        className="w-full rounded bg-blue-600 py-2 font-bold text-white transition hover:bg-blue-700"
-                    >
-                        Login
-                    </button>
-                </form>
-                <div className="mt-4 text-center">
-                    <p className="text-gray-600">
-                        Don't have an account?{" "}
-                        <Link to="/register" className="text-blue-600 hover:underline">
-                            Register here
-                        </Link>
-                    </p>
-                </div>
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+      <AuthBrandPanel />
+      <AuthFormPanel>
+        <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
+          Sign in
+        </h1>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 32px' }}>
+          Enter your credentials to continue
+        </p>
+        {error && (
+          <div
+            style={{
+              marginBottom: '20px',
+              padding: '10px 12px',
+              borderRadius: 'var(--radius)',
+              backgroundColor: 'var(--danger-subtle)',
+              color: 'var(--danger)',
+              fontSize: '13px',
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+              Email
+            </label>
+            <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+                Password
+              </label>
+              <Link to="/forgot-password" style={{ fontSize: '11px', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
+                Forgot password?
+              </Link>
             </div>
-        </div>
-    );
+            <TextInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
+          <PrimaryButton type="submit" disabled={submitting} style={{ width: '100%', marginTop: '8px' }}>
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </PrimaryButton>
+        </form>
+        <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          No account?{' '}
+          <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
+            Create one
+          </Link>
+        </p>
+      </AuthFormPanel>
+    </div>
+  );
 };
 
 export default Login;
