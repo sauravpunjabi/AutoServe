@@ -22,6 +22,7 @@ import MechanicDashboard from "./pages/mechanic/Dashboard";
 import MechanicServiceCenters from "./pages/mechanic/ServiceCenters";
 import MechanicJobCards from "./pages/mechanic/JobCards";
 import MechanicJobCardDetail from "./pages/mechanic/JobCardDetail";
+import MechanicProfile from "./pages/mechanic/Profile";
 
 import ManagerDashboard from "./pages/manager/Dashboard";
 import ManagerCreateServiceCenter from "./pages/manager/CreateServiceCenter";
@@ -34,6 +35,7 @@ import ManagerJobCardDetail from "./pages/manager/JobCardDetail";
 import ManagerInventory from "./pages/manager/Inventory";
 import ManagerInvoices from "./pages/manager/Invoices";
 import ManagerReviews from "./pages/manager/Reviews";
+import ManagerProfile from "./pages/manager/Profile";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -66,6 +68,7 @@ function App() {
             <Route path="/mechanic/service-centers" element={<MechanicServiceCenters />} />
             <Route path="/mechanic/job-cards" element={<MechanicJobCards />} />
             <Route path="/mechanic/job-cards/:id" element={<MechanicJobCardDetail />} />
+            <Route path="/mechanic/profile" element={<MechanicProfile />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={["manager"]} />}>
@@ -80,6 +83,7 @@ function App() {
             <Route path="/manager/inventory" element={<ManagerInventory />} />
             <Route path="/manager/invoices" element={<ManagerInvoices />} />
             <Route path="/manager/reviews" element={<ManagerReviews />} />
+            <Route path="/manager/profile" element={<ManagerProfile />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={["admin"]} />}>

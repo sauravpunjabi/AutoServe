@@ -9,6 +9,7 @@ import {
   Package,
   Star,
   Building2,
+  User,
 } from 'lucide-react';
 
 export const customerNav = [
@@ -28,12 +29,14 @@ export const managerNav = [
   { name: 'Invoices', path: '/manager/invoices', icon: FileText },
   { name: 'Reviews', path: '/manager/reviews', icon: Star },
   { name: 'Service Center', path: '/manager/service-center/manage', icon: Building2 },
+  { name: 'Profile', path: '/manager/profile', icon: User },
 ];
 
 export const mechanicNav = [
   { name: 'Dashboard', path: '/mechanic/dashboard', icon: LayoutDashboard },
   { name: 'Job Cards', path: '/mechanic/job-cards', icon: Briefcase },
   { name: 'Service Centers', path: '/mechanic/service-centers', icon: Building2 },
+  { name: 'Profile', path: '/mechanic/profile', icon: User },
 ];
 
 export const adminNav = [

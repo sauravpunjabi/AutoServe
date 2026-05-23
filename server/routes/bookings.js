@@ -137,6 +137,12 @@ router.patch("/:id/status", authorize, async (req, res) => {
         "INSERT INTO job_cards (booking_id) VALUES ($1) ON CONFLICT (booking_id) DO NOTHING",
         [id]
       );
+      if (req.body.mechanic_id) {
+        await pool.query(
+          "UPDATE job_cards SET mechanic_id = $1 WHERE booking_id = $2",
+          [req.body.mechanic_id, id]
+        );
+      }
     }
 
     res.json({ success: true, data: updatedBooking.rows[0] });
