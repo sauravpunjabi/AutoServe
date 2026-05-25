@@ -172,3 +172,15 @@ ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_booking_services_booking_id ON booking_services(booking_id);
 
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS services_total DECIMAL(10,2) DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS email_verifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  token VARCHAR UNIQUE NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false;
+
+UPDATE users SET is_verified = true WHERE is_verified IS NULL OR is_verified = false;

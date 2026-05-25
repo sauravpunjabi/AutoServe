@@ -5,7 +5,7 @@ const bcrypt = require("bcryptjs");
 const authorize = require("../middleware/authMiddleware");
 const jwtGenerator = require("../utils/jwtGenerator");
 const crypto = require("crypto");
-const { sendResetEmail } = require("../utils/mailer");
+const { sendResetEmail, sendVerificationEmail } = require("../utils/mailer");
 
 
 const authLimiter = rateLimit({
@@ -46,11 +46,17 @@ router.post("/register", authLimiter, async (req, res) => {
       [name, email, bcryptPassword, role, phone || null, initialStatus]
     );
 
-    const token = jwtGenerator(newUser.rows[0]);
-    const userObj = { ...newUser.rows[0] };
-    delete userObj.password;
+    const verifyToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await pool.query(
+      "INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)",
+      [newUser.rows[0].id, verifyToken, expiresAt]
+    );
 
-    res.json({ token, user: userObj });
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    await sendVerificationEmail(email, `${frontendUrl}/verify-email/${verifyToken}`);
+
+    res.json({ success: true, message: "Registration successful. Please check your email to verify your account." });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: "Server Error" });
@@ -77,6 +83,10 @@ router.post("/login", authLimiter, async (req, res) => {
 
     if (user.rows[0].status === "rejected") {
       return res.status(403).json({ success: false, message: "Account is suspended." });
+    }
+
+    if (!user.rows[0].is_verified) {
+      return res.status(403).json({ success: false, message: "Please verify your email before logging in.", resend: true });
     }
 
     const token = jwtGenerator(user.rows[0]);
@@ -109,6 +119,55 @@ router.get("/me", authorize, async (req, res) => {
 router.get("/is-verify", authorize, async (req, res) => {
   try {
     res.json({ success: true, data: true });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
+router.get("/verify-email/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM email_verifications WHERE token = $1 AND expires_at > NOW()",
+      [token]
+    );
+    if (result.rows.length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid or expired verification link." });
+    }
+    const { user_id } = result.rows[0];
+    await pool.query("UPDATE users SET is_verified = true WHERE id = $1", [user_id]);
+    await pool.query("DELETE FROM email_verifications WHERE token = $1", [token]);
+    res.json({ success: true, message: "Email verified successfully. You can now log in." });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
+router.post("/resend-verification", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email is required." });
+    }
+    const user = await pool.query("SELECT id, is_verified FROM users WHERE LOWER(email) = LOWER($1)", [email.trim()]);
+    if (user.rows.length === 0) {
+      return res.json({ success: true, message: "If that email exists and is unverified, we've sent a new verification link." });
+    }
+    if (user.rows[0].is_verified) {
+      return res.status(400).json({ success: false, message: "Email already verified." });
+    }
+    await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [user.rows[0].id]);
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await pool.query(
+      "INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)",
+      [user.rows[0].id, token, expiresAt]
+    );
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    await sendVerificationEmail(email.trim(), `${frontendUrl}/verify-email/${token}`);
+    res.json({ success: true, message: "Verification email resent." });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: "Server Error" });

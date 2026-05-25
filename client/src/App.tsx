@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import VerifyEmail from "./pages/VerifyEmail";
 
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerVehicles from "./pages/customer/Vehicles";
@@ -52,6 +53,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
 
           <Route element={<ProtectedRoute roles={["customer"]} />}>
             <Route path="/customer/dashboard" element={<CustomerDashboard />} />

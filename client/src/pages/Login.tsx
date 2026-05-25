@@ -9,6 +9,8 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNeedsVerification(false);
+    setResendStatus('');
     setSubmitting(true);
     try {
       const response = await api.post('/auth/login', { email, password });
@@ -23,9 +27,25 @@ const Login = () => {
       login(token, { id: user.id, name: user.name, email: user.email, role: user.role });
       navigate(`/${user.role}/dashboard`);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      const data = err.response?.data;
+      if (err.response?.status === 403 && data?.resend) {
+        setNeedsVerification(true);
+        setError(data.message);
+      } else {
+        setError(data?.message || 'Login failed');
+      }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendStatus('');
+    try {
+      await api.post('/auth/resend-verification', { email });
+      setResendStatus('Verification email sent. Check your inbox.');
+    } catch (err: any) {
+      setResendStatus(err.response?.data?.message || 'Failed to resend email.');
     }
   };
 
@@ -42,7 +62,7 @@ const Login = () => {
         {error && (
           <div
             style={{
-              marginBottom: '20px',
+              marginBottom: needsVerification ? '8px' : '20px',
               padding: '10px 12px',
               borderRadius: 'var(--radius)',
               backgroundColor: 'var(--danger-subtle)',
@@ -51,6 +71,20 @@ const Login = () => {
             }}
           >
             {error}
+          </div>
+        )}
+        {needsVerification && (
+          <div style={{ marginBottom: '20px' }}>
+            {resendStatus ? (
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{resendStatus}</p>
+            ) : (
+              <button
+                onClick={handleResend}
+                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '13px', fontWeight: 500, padding: 0 }}
+              >
+                Resend verification email
+              </button>
+            )}
           </div>
         )}
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
