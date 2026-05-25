@@ -91,9 +91,7 @@ Frontend runs at `http://localhost:5173`
 
 See `server/.env.example` and `client/.env.example` for required variables.
 
-## Screenshots
 
-_Add screenshots here_
 
 ## License
 
