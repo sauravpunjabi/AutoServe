@@ -5,7 +5,7 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
-app.set('trust proxy', 1);
+
 
 const allowedOrigins = [
   "http://localhost:5173",
