@@ -32,29 +32,25 @@ router.post("/register", authLimiter, async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid role." });
     }
 
-    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
+    const existing = await pool.query("SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [email]);
     if (existing.rows.length > 0) {
       return res.status(401).json({ success: false, message: "User already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
     const bcryptPassword = await bcrypt.hash(password, salt);
-    const initialStatus = role === "mechanic" ? "pending" : "active";
 
-    const newUser = await pool.query(
-      "INSERT INTO users (name, email, password, role, phone, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [name, email, bcryptPassword, role, phone || null, initialStatus]
-    );
-
-    const verifyToken = crypto.randomUUID();
+    const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await pool.query("DELETE FROM pending_registrations WHERE LOWER(email) = LOWER($1)", [email]);
     await pool.query(
-      "INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)",
-      [newUser.rows[0].id, verifyToken, expiresAt]
+      "INSERT INTO pending_registrations (name, email, password, role, phone, token, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+      [name, email, bcryptPassword, role, phone || null, token, expiresAt]
     );
 
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    await sendVerificationEmail(email, `${frontendUrl}/verify-email/${verifyToken}`);
+    await sendVerificationEmail(email, `${frontendUrl}/verify-email/${token}`);
 
     res.json({ success: true, message: "Registration successful. Please check your email to verify your account." });
   } catch (err) {
@@ -73,6 +69,10 @@ router.post("/login", authLimiter, async (req, res) => {
 
     const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     if (user.rows.length === 0) {
+      const pending = await pool.query("SELECT id FROM pending_registrations WHERE LOWER(email) = LOWER($1)", [email]);
+      if (pending.rows.length > 0) {
+        return res.status(403).json({ success: false, message: "Please verify your email before logging in.", resend: true });
+      }
       return res.status(401).json({ success: false, message: "Password or Email is incorrect" });
     }
 
@@ -83,10 +83,6 @@ router.post("/login", authLimiter, async (req, res) => {
 
     if (user.rows[0].status === "rejected") {
       return res.status(403).json({ success: false, message: "Account is suspended." });
-    }
-
-    if (!user.rows[0].is_verified) {
-      return res.status(403).json({ success: false, message: "Please verify your email before logging in.", resend: true });
     }
 
     const token = jwtGenerator(user.rows[0]);
@@ -129,15 +125,24 @@ router.get("/verify-email/:token", async (req, res) => {
   try {
     const { token } = req.params;
     const result = await pool.query(
-      "SELECT * FROM email_verifications WHERE token = $1 AND expires_at > NOW()",
+      "SELECT * FROM pending_registrations WHERE token = $1 AND expires_at > NOW()",
       [token]
     );
     if (result.rows.length === 0) {
       return res.status(400).json({ success: false, message: "Invalid or expired verification link." });
     }
-    const { user_id } = result.rows[0];
-    await pool.query("UPDATE users SET is_verified = true WHERE id = $1", [user_id]);
-    await pool.query("DELETE FROM email_verifications WHERE token = $1", [token]);
+    const { name, email, password, role, phone } = result.rows[0];
+    const initialStatus = role === "mechanic" ? "pending" : "active";
+
+    const existingUser = await pool.query("SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [email]);
+    if (existingUser.rows.length === 0) {
+      await pool.query(
+        "INSERT INTO users (name, email, password, role, phone, status) VALUES ($1, $2, $3, $4, $5, $6)",
+        [name, email, password, role, phone, initialStatus]
+      );
+    }
+
+    await pool.query("DELETE FROM pending_registrations WHERE token = $1", [token]);
     res.json({ success: true, message: "Email verified successfully. You can now log in." });
   } catch (err) {
     console.error(err.message);
@@ -151,19 +156,19 @@ router.post("/resend-verification", async (req, res) => {
     if (!email) {
       return res.status(400).json({ success: false, message: "Email is required." });
     }
-    const user = await pool.query("SELECT id, is_verified FROM users WHERE LOWER(email) = LOWER($1)", [email.trim()]);
-    if (user.rows.length === 0) {
-      return res.json({ success: true, message: "If that email exists and is unverified, we've sent a new verification link." });
-    }
-    if (user.rows[0].is_verified) {
+    const existing = await pool.query("SELECT id FROM users WHERE LOWER(email) = LOWER($1)", [email.trim()]);
+    if (existing.rows.length > 0) {
       return res.status(400).json({ success: false, message: "Email already verified." });
     }
-    await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [user.rows[0].id]);
+    const pending = await pool.query("SELECT id FROM pending_registrations WHERE LOWER(email) = LOWER($1)", [email.trim()]);
+    if (pending.rows.length === 0) {
+      return res.json({ success: true, message: "If that email has a pending registration, we've sent a new verification link." });
+    }
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await pool.query(
-      "INSERT INTO email_verifications (user_id, token, expires_at) VALUES ($1, $2, $3)",
-      [user.rows[0].id, token, expiresAt]
+      "UPDATE pending_registrations SET token = $1, expires_at = $2 WHERE LOWER(email) = LOWER($3)",
+      [token, expiresAt, email.trim()]
     );
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     await sendVerificationEmail(email.trim(), `${frontendUrl}/verify-email/${token}`);
