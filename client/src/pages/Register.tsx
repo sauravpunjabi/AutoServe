@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { AuthBrandPanel, AuthFormPanel } from '../components/AuthShell';
 import { TextInput, PrimaryButton } from '../components/ui/primitives';
@@ -11,72 +11,25 @@ const ROLES = [
 ] as const;
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'customer' as string });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [registered, setRegistered] = useState(false);
-  const [resendStatus, setResendStatus] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
     try {
-      await api.post('/auth/register', formData);
-      setRegistered(true);
+      const res = await api.post('/auth/register', formData);
+      localStorage.setItem('token', res.data.token);
+      navigate(`/${formData.role}/dashboard`);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Registration failed');
     } finally {
       setSubmitting(false);
     }
   };
-
-  const handleResend = async () => {
-    setResendStatus('');
-    try {
-      await api.post('/auth/resend-verification', { email: formData.email });
-      setResendStatus('Verification email resent. Check your inbox.');
-    } catch (err: any) {
-      setResendStatus(err.response?.data?.message || 'Failed to resend email.');
-    }
-  };
-
-  if (registered) {
-    return (
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
-        <AuthBrandPanel>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-            &copy; {new Date().getFullYear()} AutoServe
-          </p>
-        </AuthBrandPanel>
-        <AuthFormPanel>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px' }}>✉️</div>
-            <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 12px' }}>
-              Check your email
-            </h1>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 32px', lineHeight: '1.6' }}>
-              Account created! Check your email to verify your account before logging in.
-            </p>
-            {resendStatus && (
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>{resendStatus}</p>
-            )}
-            <button
-              onClick={handleResend}
-              style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '13px', fontWeight: 500 }}
-            >
-              Resend verification email
-            </button>
-            <p style={{ marginTop: '24px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-              <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
-                Back to sign in
-              </Link>
-            </p>
-          </div>
-        </AuthFormPanel>
-      </div>
-    );
-  }
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>

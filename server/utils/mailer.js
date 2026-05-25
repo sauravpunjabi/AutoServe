@@ -8,33 +8,6 @@ const brevo = new BrevoClient({
   apiKey: process.env.BREVO_API_KEY || '',
 });
 
-const sendVerificationEmail = async (to, link) => {
-  console.log(`\n======================================================`);
-  console.log(`[MAILER] Verification link for ${to}:`);
-  console.log(link);
-  console.log(`======================================================\n`);
-
-  try {
-    const response = await brevo.transactionalEmails.sendTransacEmail({
-      sender: { name: 'AutoServe', email: 'noreply@autoserve.app' },
-      to: [{ email: to }],
-      subject: 'Verify your AutoServe account',
-      htmlContent: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
-          <h2 style="color: #f97316;">Verify your email</h2>
-          <p>Click below to verify your account. Link expires in 24 hours.</p>
-          <a href="${link}" style="display:inline-block;padding:12px 24px;background:#f97316;color:white;border-radius:8px;text-decoration:none;font-weight:600;">Verify Email</a>
-        </div>
-      `,
-    });
-    console.log(`[MAILER] Verification email sent successfully to ${to}.`);
-    return response;
-  } catch (error) {
-    console.error(`[MAILER] Failed to send verification email to ${to}:`, error.message || error);
-    throw error;
-  }
-};
-
 const sendResetEmail = async (to, link) => {
   console.log(`\n======================================================`);
   console.log(`[MAILER] Password reset link for ${to}:`);
@@ -62,4 +35,4 @@ const sendResetEmail = async (to, link) => {
   }
 };
 
-module.exports = { sendVerificationEmail, sendResetEmail };
+module.exports = { sendResetEmail };
