@@ -1,10 +1,12 @@
-const Brevo = require('@getbrevo/brevo');
+const brevo = require('@getbrevo/brevo');
 
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+const defaultClient = brevo.ApiClient.instance;
+defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+
+const apiInstance = new brevo.TransactionalEmailsApi();
 
 const sendVerificationEmail = async (to, link) => {
-  const sendSmtpEmail = new Brevo.SendSmtpEmail();
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.sender = { name: 'AutoServe', email: 'noreply@autoserve.app' };
   sendSmtpEmail.to = [{ email: to }];
   sendSmtpEmail.subject = 'Verify your AutoServe account';
@@ -19,7 +21,7 @@ const sendVerificationEmail = async (to, link) => {
 };
 
 const sendResetEmail = async (to, link) => {
-  const sendSmtpEmail = new Brevo.SendSmtpEmail();
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
   sendSmtpEmail.sender = { name: 'AutoServe', email: 'noreply@autoserve.app' };
   sendSmtpEmail.to = [{ email: to }];
   sendSmtpEmail.subject = 'Reset your AutoServe password';
