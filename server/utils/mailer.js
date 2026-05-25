@@ -8,6 +8,11 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+transporter.verify((error) => {
+  if (error) console.error('❌ Mail server error:', error.message);
+  else console.log('✅ Mail server ready');
+});
+
 async function sendResetEmail(to, link) {
   console.log(`\n======================================================`);
   console.log(`[MAILER] Password reset link for ${to}:`);

@@ -5,24 +5,26 @@ const { createServer } = require("http");
 const { Server } = require("socket.io");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(",").map(o => o.trim()) : []),
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true,
-  },
-});
+const io = new Server(httpServer, { cors: corsOptions });
 app.set("socketio", io);
 
-
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/service-centers", require("./routes/serviceCenters"));
