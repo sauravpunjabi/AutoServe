@@ -158,46 +158,67 @@ export default function ManagerInventory() {
               {items.map((i) => {
                 const low = i.quantity < (i.low_stock_threshold || 10);
                 return (
-                  <TableRow key={i.id}>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        backgroundColor: low ? 'var(--danger-subtle)' : undefined,
-                      }}
-                    >
-                      {i.name}
-                    </td>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        color: low ? 'var(--danger)' : undefined,
-                        fontWeight: low ? 500 : undefined,
-                        backgroundColor: low ? 'var(--danger-subtle)' : undefined,
-                      }}
-                    >
-                      {i.quantity}
-                      {low && (
-                        <span
-                          style={{
-                            marginLeft: '8px',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontSize: '11px',
-                            color: 'var(--danger)',
-                            backgroundColor: 'var(--danger-subtle)',
-                          }}
-                        >
-                          Low stock
+                  <tr
+                    key={i.id}
+                    style={{
+                      borderBottom: '1px solid var(--border-subtle)',
+                      borderLeft: low ? '3px solid var(--danger)' : '3px solid transparent',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                  >
+                    <td style={tdStyle}>{i.name}</td>
+                    <td style={{ ...tdStyle }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ color: low ? 'var(--danger)' : 'var(--text-primary)', fontWeight: low ? 600 : 400 }}>
+                          {i.quantity}
                         </span>
-                      )}
+                        {low && (
+                          <span
+                            style={{
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              color: 'var(--danger)',
+                              backgroundColor: 'var(--danger-subtle)',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            Low
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          marginTop: '6px',
+                          height: '3px',
+                          borderRadius: '2px',
+                          backgroundColor: 'var(--border)',
+                          width: '80px',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <div
+                          style={{
+                            height: '100%',
+                            borderRadius: '2px',
+                            width: `${Math.min(100, (i.quantity / Math.max(i.low_stock_threshold * 3, 1)) * 100)}%`,
+                            backgroundColor: low ? 'var(--danger)' : 'var(--accent)',
+                            transition: 'width 0.3s ease',
+                          }}
+                        />
+                      </div>
                     </td>
-                    <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
-                      ${Number(i.unit_price).toFixed(2)}
+                    <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                      ₹{Number(i.unit_price).toFixed(2)}
                     </td>
-                    <td style={{ ...tdStyle, color: 'var(--text-muted)' }}>
+                    <td style={{ ...tdStyle, color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
                       {i.low_stock_threshold}
                     </td>
-                  </TableRow>
+                  </tr>
                 );
               })}
             </tbody>

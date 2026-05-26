@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { AuthBrandPanel, AuthFormPanel } from '../components/AuthShell';
-import { TextInput, PrimaryButton } from '../components/ui/primitives';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -49,73 +48,195 @@ const Login = () => {
     }
   };
 
+  const inputBase: React.CSSProperties = {
+    width: '100%',
+    padding: '7px 10px',
+    backgroundColor: 'var(--bg)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius)',
+    fontSize: '13px',
+    color: 'var(--text-primary)',
+    outline: 'none',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+    fontFamily: 'Geist, sans-serif',
+  };
+
+  const inputError: React.CSSProperties = {
+    ...inputBase,
+    borderColor: 'var(--danger)',
+    boxShadow: '0 0 0 2px rgba(239,68,68,0.12)',
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>, hasError?: boolean) => {
+    e.currentTarget.style.borderColor = hasError ? 'var(--danger)' : 'var(--accent)';
+    e.currentTarget.style.boxShadow = hasError
+      ? '0 0 0 2px rgba(239,68,68,0.15)'
+      : '0 0 0 2px var(--accent-glow)';
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>, hasError?: boolean) => {
+    e.currentTarget.style.borderColor = hasError ? 'var(--danger)' : 'var(--border-strong)';
+    e.currentTarget.style.boxShadow = hasError ? '0 0 0 2px rgba(239,68,68,0.12)' : 'none';
+  };
+
+  const hasFieldError = !!error && !needsVerification;
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
       <AuthBrandPanel />
       <AuthFormPanel>
-        <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-          Sign in
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 32px' }}>
-          Enter your credentials to continue
-        </p>
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+            Welcome back
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+            Sign in to your AutoServe account
+          </p>
+        </div>
+
         {error && (
           <div
             style={{
-              marginBottom: needsVerification ? '8px' : '20px',
-              padding: '10px 12px',
+              marginBottom: needsVerification ? '8px' : '16px',
+              padding: '8px 12px',
               borderRadius: 'var(--radius)',
               backgroundColor: 'var(--danger-subtle)',
+              border: '1px solid rgba(239,68,68,0.2)',
               color: 'var(--danger)',
-              fontSize: '13px',
+              fontSize: '12px',
             }}
           >
             {error}
           </div>
         )}
+
         {needsVerification && (
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '16px' }}>
             {resendStatus ? (
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{resendStatus}</p>
+              <p style={{ fontSize: '12px', color: 'var(--success)', margin: 0, padding: '8px 10px', backgroundColor: 'var(--success-subtle)', borderRadius: 'var(--radius)' }}>
+                {resendStatus}
+              </p>
             ) : (
               <button
                 onClick={handleResend}
-                style={{ background: 'none', border: 'none', color: 'var(--accent)', cursor: 'pointer', fontSize: '13px', fontWeight: 500, padding: 0 }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--accent)',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  padding: 0,
+                  fontFamily: 'Geist, sans-serif',
+                  transition: 'color 0.15s ease',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--accent-hover)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--accent)'; }}
               >
-                Resend verification email
+                Resend verification email →
               </button>
             )}
           </div>
         )}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px' }}>
               Email
             </label>
-            <TextInput type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+              style={hasFieldError ? inputError : inputBase}
+              onFocus={(e) => handleFocus(e, hasFieldError)}
+              onBlur={(e) => handleBlur(e, hasFieldError)}
+            />
           </div>
+
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                 Password
               </label>
-              <Link to="/forgot-password" style={{ fontSize: '11px', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
-                Forgot password?
+              <Link
+                to="/forgot-password"
+                style={{ fontSize: '11px', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500, transition: 'color 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
+              >
+                Forgot?
               </Link>
             </div>
-            <TextInput type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              style={hasFieldError ? inputError : inputBase}
+              onFocus={(e) => handleFocus(e, hasFieldError)}
+              onBlur={(e) => handleBlur(e, hasFieldError)}
+            />
           </div>
-          <PrimaryButton type="submit" disabled={submitting} style={{ width: '100%', marginTop: '8px' }}>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              width: '100%',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              marginTop: '4px',
+              backgroundColor: submitting ? 'var(--bg-elevated)' : 'var(--accent)',
+              color: submitting ? 'var(--text-muted)' : '#000',
+              border: 'none',
+              borderRadius: 'var(--radius)',
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: submitting ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s ease',
+              opacity: submitting ? 0.6 : 1,
+              fontFamily: 'Geist, sans-serif',
+            }}
+            onMouseEnter={(e) => {
+              if (!submitting) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent-hover)';
+                (e.currentTarget as HTMLElement).style.transform = 'scale(1.01)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!submitting) {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent)';
+                (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+              }
+            }}
+          >
+            {submitting && (
+              <span style={{ width: '12px', height: '12px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+            )}
             {submitting ? 'Signing in…' : 'Sign in'}
-          </PrimaryButton>
+          </button>
         </form>
-        <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)' }}>
+
+        <p style={{ marginTop: '20px', textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary)' }}>
           No account?{' '}
-          <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
-            Create one
+          <Link
+            to="/register"
+            style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600, transition: 'color 0.15s ease' }}
+            onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-hover)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
+          >
+            Create one →
           </Link>
         </p>
       </AuthFormPanel>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

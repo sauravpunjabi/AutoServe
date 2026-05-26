@@ -45,7 +45,19 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <ToastContainer position="top-right" autoClose={3000} />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={3000}
+          toastStyle={{
+            background: '#141414',
+            border: '1px solid #2a2a2a',
+            color: '#fafafa',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontFamily: 'Geist, sans-serif',
+          }}
+          closeButton={false}
+        />
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />

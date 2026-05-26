@@ -1,96 +1,144 @@
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { Wrench, Car, Calendar, Shield, FileText, Clock } from 'lucide-react';
+import { Car, Calendar, Wrench, Clock, FileText, Shield, Users, Zap } from 'lucide-react';
+
+function useCountUp(end: number, duration: number = 2000, active: boolean = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let startTime: number | null = null;
+    const frame = (ts: number) => {
+      if (!startTime) startTime = ts;
+      const progress = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * end));
+      if (progress < 1) requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  }, [active, end, duration]);
+  return count;
+}
+
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setInView(true); },
+      { threshold }
+    );
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+  return { ref, inView };
+}
+
+const features = [
+  { icon: Car, title: 'Vehicle Management', desc: 'Register vehicles and maintain detailed service histories on one secure dashboard.' },
+  { icon: Calendar, title: 'Smart Booking', desc: 'Schedule maintenance slots online at your closest, most convenient workshop.' },
+  { icon: Wrench, title: 'Expert Mechanics', desc: 'Match specialized jobs with certified, experienced technicians automatically.' },
+  { icon: Clock, title: 'Real-time Tracking', desc: 'Track every stage of the active job card from drop-off to ready-for-pickup.' },
+  { icon: FileText, title: 'Digital Invoices', desc: 'Obtain clean digital invoices detailing parts and labor costs automatically.' },
+  { icon: Shield, title: 'Quality Assured', desc: 'Ensure high workshop standards and stock levels using smart inventory triggers.' },
+];
+
+const steps = [
+  { n: '01', icon: Users, title: 'Register', desc: 'Sign up and add your vehicle models and license details.' },
+  { n: '02', icon: Calendar, title: 'Book Service', desc: 'Choose a local service center and book a time slot.' },
+  { n: '03', icon: Clock, title: 'Track Progress', desc: 'Watch your mechanic work on your job card live.' },
+  { n: '04', icon: FileText, title: 'Get Invoice', desc: 'View itemized breakdowns and invoices once tasks complete.' },
+];
+
+const metrics = [
+  { value: '10K+', label: 'Vehicles Serviced' },
+  { value: '50+', label: 'Expert Mechanics' },
+  { value: '98%', label: 'Satisfaction Rate' },
+  { value: '24/7', label: 'Support' },
+];
+
+const heroWords = ['The', 'smarter', 'way', 'to', 'manage', 'vehicle', 'services.'];
 
 export default function Landing() {
+  const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  const { ref: statsRef, inView: statsVisible } = useInView();
+  const { ref: featRef } = useInView();
+  const { ref: stepsRef, inView: stepsVisible } = useInView();
+  const { ref: ctaRef, inView: ctaVisible } = useInView();
+
+  const vehicles = useCountUp(10000, 2200, statsVisible);
+  const satisfaction = useCountUp(98, 1600, statsVisible);
+  const mechanics = useCountUp(50, 1600, statsVisible);
+
+  useEffect(() => {
+    setMounted(true);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <div style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
-      {/* 1. Sticky Header */}
+    <div style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)', minHeight: '100vh' }}>
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <header
         style={{
-          position: 'sticky',
+          position: 'fixed',
           top: 0,
+          left: 0,
+          right: 0,
           zIndex: 1000,
-          backgroundColor: 'var(--bg-card)',
-          borderBottom: '1px solid var(--border)',
-          height: '64px',
+          height: '48px',
           display: 'flex',
           alignItems: 'center',
           padding: '0 24px',
+          backgroundColor: scrolled ? 'rgba(8,8,8,0.9)' : 'transparent',
+          borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
+          backdropFilter: scrolled ? 'blur(12px)' : 'none',
+          transition: 'all 0.25s ease',
         }}
       >
         <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                backgroundColor: 'var(--accent)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Wrench size={18} color="white" />
-            </div>
-            <span
-              style={{
-                fontSize: '18px',
-                fontWeight: 600,
-                color: 'var(--text-primary)',
-                letterSpacing: '-0.02em',
-              }}
-            >
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+            <Wrench size={16} color="var(--accent)" />
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
               AutoServe
             </span>
           </Link>
 
-          {/* Navigation CTAs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Link
               to="/login"
               style={{
-                padding: '8px 16px',
-                backgroundColor: 'transparent',
+                padding: '5px 12px',
                 color: 'var(--text-secondary)',
-                border: '1px solid var(--border)',
-                borderRadius: 'var(--radius)',
                 fontSize: '13px',
                 fontWeight: 500,
                 textDecoration: 'none',
-                transition: 'all 0.15s',
+                borderRadius: 'var(--radius)',
+                border: 'none',
+                transition: 'color 0.15s ease',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
             >
-              Sign In
+              Login
             </Link>
             <Link
               to="/register"
               style={{
-                padding: '8px 16px',
+                padding: '5px 12px',
                 backgroundColor: 'var(--accent)',
-                color: 'white',
-                border: 'none',
+                color: '#000',
                 borderRadius: 'var(--radius)',
                 fontSize: '13px',
-                fontWeight: 500,
+                fontWeight: 600,
                 textDecoration: 'none',
-                transition: 'background 0.15s',
+                transition: 'background-color 0.15s ease',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--accent-hover)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--accent)';
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--accent-hover)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'var(--accent)'; }}
             >
               Register
             </Link>
@@ -98,339 +146,481 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* 2. Hero Section */}
+      {/* ── Hero ────────────────────────────────────────────────────────── */}
       <section
         style={{
-          minHeight: 'calc(100vh - 64px)',
+          minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px 24px',
-          borderBottom: '1px solid var(--border)',
-          backgroundColor: 'var(--bg)',
+          padding: '48px 24px 60px',
+          position: 'relative',
+          overflow: 'hidden',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
         }}
       >
-        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+        {/* Orange glow */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '30%',
+            left: '50%',
+            width: '600px',
+            height: '600px',
+            background: 'radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        <div style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+          {/* Eyebrow */}
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              border: '1px solid var(--accent-border)',
+              fontSize: '10px',
+              fontWeight: 500,
+              color: 'var(--accent)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.15em',
+              marginBottom: '20px',
+              opacity: mounted ? 1 : 0,
+              transition: 'opacity 0.4s ease',
+            }}
+          >
+            <Zap size={10} />
+            Vehicle Service Management
+          </div>
+
+          {/* Headline */}
           <h1
             style={{
-              fontSize: '44px',
+              fontSize: '48px',
               fontWeight: 700,
-              color: 'var(--text-primary)',
-              lineHeight: 1.15,
+              lineHeight: 1.1,
               letterSpacing: '-0.03em',
-              margin: '0 0 24px',
+              margin: '0 0 16px',
+              color: 'var(--text-primary)',
             }}
           >
-            Smart Vehicle Maintenance <br />
-            <span style={{ color: 'var(--accent)' }}>& Service Management</span>
+            {heroWords.map((word, i) => (
+              <Fragment key={i}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    opacity: mounted ? 1 : 0,
+                    transform: mounted ? 'translateY(0)' : 'translateY(12px)',
+                    transition: `opacity 0.4s ease ${i * 0.05}s, transform 0.4s ease ${i * 0.05}s`,
+                    color: word === 'smarter' ? 'var(--accent)' : 'inherit',
+                  }}
+                >
+                  {word}
+                </span>
+                {i < heroWords.length - 1 ? ' ' : ''}
+              </Fragment>
+            ))}
           </h1>
+
+          {/* Subheadline */}
           <p
             style={{
-              fontSize: '16px',
+              fontSize: '15px',
               lineHeight: 1.6,
               color: 'var(--text-secondary)',
-              maxWidth: '600px',
-              margin: '0 auto 40px',
+              maxWidth: '480px',
+              margin: '0 auto 32px',
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s',
             }}
           >
-            Streamline your vehicle servicing, track repair job cards in real time, and manage invoices and inventory seamlessly across multiple service hubs.
+            Streamline vehicle servicing, track repair jobs in real time, and manage invoices and inventory — all in one place.
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+
+          {/* CTAs */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '12px',
+              flexWrap: 'wrap',
+              marginBottom: '48px',
+              opacity: mounted ? 1 : 0,
+              transform: mounted ? 'translateY(0)' : 'translateY(8px)',
+              transition: 'opacity 0.4s ease 0.4s, transform 0.4s ease 0.4s',
+            }}
+          >
             <Link
               to="/register"
               style={{
-                padding: '12px 24px',
+                padding: '10px 22px',
                 backgroundColor: 'var(--accent)',
-                color: 'white',
+                color: '#000',
                 borderRadius: 'var(--radius-lg)',
-                fontSize: '15px',
-                fontWeight: 600,
+                fontSize: '14px',
+                fontWeight: 700,
                 textDecoration: 'none',
-                transition: 'background 0.15s',
+                transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.backgroundColor = 'var(--accent-hover)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.backgroundColor = 'var(--accent)';
+                e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
-              Book a Service
+              Get Started
             </Link>
             <Link
               to="/login"
               style={{
-                padding: '12px 24px',
-                backgroundColor: 'var(--bg-card)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border)',
+                padding: '10px 22px',
+                backgroundColor: 'transparent',
+                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-strong)',
                 borderRadius: 'var(--radius-lg)',
-                fontSize: '15px',
+                fontSize: '14px',
                 fontWeight: 600,
                 textDecoration: 'none',
-                transition: 'background 0.15s',
+                transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                e.currentTarget.style.borderColor = 'var(--accent-border)';
+                e.currentTarget.style.color = 'var(--text-primary)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--bg-card)';
+                e.currentTarget.style.borderColor = 'var(--border-strong)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
               }}
             >
               Sign In
             </Link>
           </div>
+
+          {/* Floating metrics */}
+          <div
+            className="stagger-children"
+            style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}
+          >
+            {metrics.map(({ value, label }) => (
+              <div
+                key={label}
+                style={{
+                  padding: '12px 20px',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  textAlign: 'center',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+                }}
+              >
+                <div style={{ fontSize: '20px', fontFamily: 'Geist Mono, monospace', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+                  {value}
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 3. Features Grid */}
-      <section style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 12px' }}>
-              Advanced Core Features
+      {/* ── Features ────────────────────────────────────────────────────── */}
+      <section ref={featRef} style={{ padding: '80px 24px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
+              Features
+            </p>
+            <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
+              Everything you need to run service operations
             </h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto', lineHeight: 1.6 }}>
               A centralized digital platform designed to optimize every stage of vehicle maintenance.
             </p>
           </div>
 
+          {/* 3x2 grid with gap 1px — touching borders effect */}
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-              gap: '24px',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '1px',
+              backgroundColor: 'var(--border)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
             }}
           >
-            {/* Feature 1 */}
-            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '28px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <Car size={20} color="var(--accent)" />
+            {features.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                style={{
+                  backgroundColor: 'var(--bg-card)',
+                  padding: '24px',
+                  transition: 'background-color 0.15s ease',
+                  cursor: 'default',
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)';
+                  const iconEl = (e.currentTarget as HTMLElement).querySelector('.feat-icon-wrap') as HTMLElement;
+                  if (iconEl) iconEl.style.backgroundColor = 'var(--accent-border)';
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-card)';
+                  const iconEl = (e.currentTarget as HTMLElement).querySelector('.feat-icon-wrap') as HTMLElement;
+                  if (iconEl) iconEl.style.backgroundColor = 'var(--accent-subtle)';
+                }}
+              >
+                <div
+                  className="feat-icon-wrap"
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    backgroundColor: 'var(--accent-subtle)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '12px',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                >
+                  <Icon size={16} color="var(--accent)" />
+                </div>
+                <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 4px' }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                  {desc}
+                </p>
               </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Vehicle Management
-              </h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Register personal vehicles and maintain detailed service histories on one secure dashboard.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '28px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <Calendar size={20} color="var(--accent)" />
-              </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Smart Booking
-              </h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Schedule maintenance slots online at your closest, most convenient workshop.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '28px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <Wrench size={20} color="var(--accent)" />
-              </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Expert Mechanics
-              </h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Match specialized jobs with certified, experienced technicians automatically.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '28px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <Clock size={20} color="var(--accent)" />
-              </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Real-time Tracking
-              </h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Track every stage of the active job card from vehicle drop-off to ready-for-pickup.
-              </p>
-            </div>
-
-            {/* Feature 5 */}
-            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '28px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <FileText size={20} color="var(--accent)" />
-              </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Digital Invoices
-              </h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Obtain clean digital invoices detailing parts and labor costs automatically.
-              </p>
-            </div>
-
-            {/* Feature 6 */}
-            <div style={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '28px' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-                <Shield size={20} color="var(--accent)" />
-              </div>
-              <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Quality Assured
-              </h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Ensure high workshop standards and stock levels using smart inventory triggers.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 4. How It Works */}
-      <section style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg)' }}>
-        <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 12px' }}>
+      {/* ── How it works ────────────────────────────────────────────────── */}
+      <section ref={stepsRef} style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
               How It Works
-            </h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-              Four simple phases to service your vehicle digitally and friction-free.
             </p>
+            <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+              Four simple steps
+            </h2>
           </div>
 
           <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'space-between',
-              gap: '32px',
-            }}
+            className={stepsVisible ? 'stagger-children' : ''}
+            style={{ display: 'flex', alignItems: 'flex-start', gap: '0' }}
           >
-            {/* Step 1 */}
-            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace' }}>01</div>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Register</h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Sign up as a customer and add your vehicle models and license details.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace' }}>02</div>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Book Service</h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Choose a local service center, describe requirements, and book a time slot.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace' }}>03</div>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Track Progress</h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                Watch your mechanic start tasks, request parts, and work on your job card.
-              </p>
-            </div>
-
-            {/* Step 4 */}
-            <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{ fontSize: '32px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace' }}>04</div>
-              <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Get Invoice</h3>
-              <p style={{ fontSize: '13px', lineHeight: 1.5, color: 'var(--text-secondary)', margin: 0 }}>
-                View itemized breakdowns and invoices securely once tasks are completed.
-              </p>
-            </div>
+            {steps.map(({ n, icon: Icon, title, desc }, i) => (
+              <Fragment key={n}>
+                <div style={{ flex: 1, textAlign: 'center', padding: '0 16px' }}>
+                  <p
+                    style={{
+                      fontSize: '11px',
+                      fontFamily: 'Geist Mono, monospace',
+                      fontWeight: 500,
+                      color: 'var(--accent)',
+                      margin: '0 0 10px',
+                    }}
+                  >
+                    {n}
+                  </p>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--accent-subtle)',
+                      border: '1px solid var(--accent-border)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 12px',
+                    }}
+                  >
+                    <Icon size={16} color="var(--accent)" />
+                  </div>
+                  <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px' }}>
+                    {title}
+                  </h3>
+                  <p style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                    {desc}
+                  </p>
+                </div>
+                {i < steps.length - 1 && (
+                  <div
+                    style={{
+                      width: '40px',
+                      flexShrink: 0,
+                      borderTop: '1px dashed var(--border-strong)',
+                      marginTop: '18px',
+                    }}
+                  />
+                )}
+              </Fragment>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 5. Stats Bar */}
-      <section style={{ padding: '48px 24px', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-card)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '32px',
-              textAlign: 'center',
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: '4px' }}>10K+</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Vehicles Serviced</div>
+      {/* ── Stats bar ───────────────────────────────────────────────────── */}
+      <section
+        ref={statsRef}
+        style={{
+          backgroundColor: 'var(--bg-card)',
+          borderBottom: '1px solid var(--border)',
+        }}
+      >
+        <div
+          style={{
+            maxWidth: '960px',
+            margin: '0 auto',
+            display: 'flex',
+            padding: '0',
+          }}
+        >
+          {[
+            { value: statsVisible ? `${vehicles.toLocaleString()}+` : '0+', label: 'Vehicles Serviced' },
+            { value: statsVisible ? `${satisfaction}%` : '0%', label: 'Satisfaction Rate' },
+            { value: statsVisible ? `${mechanics}+` : '0+', label: 'Expert Mechanics' },
+            { value: '24/7', label: 'Support Available' },
+          ].map(({ value, label }, i) => (
+            <div
+              key={label}
+              style={{
+                flex: 1,
+                padding: '40px 24px',
+                textAlign: 'center',
+                borderRight: i < 3 ? '1px solid var(--border)' : 'none',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '32px',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  fontFamily: 'Geist Mono, monospace',
+                  letterSpacing: '-0.03em',
+                  marginBottom: '6px',
+                }}
+              >
+                {value}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                {label}
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: '4px' }}>98%</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Satisfaction Rate</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: '4px' }}>50+</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Expert Mechanics</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: 'var(--accent)', fontFamily: 'monospace', marginBottom: '4px' }}>24/7</div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Support Available</div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* 6. CTA Section */}
-      <section style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <h2 style={{ fontSize: '28px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '16px' }}>
+      {/* ── CTA ─────────────────────────────────────────────────────────── */}
+      <section ref={ctaRef} style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
+        <div
+          style={{
+            maxWidth: '560px',
+            margin: '0 auto',
+            padding: '48px',
+            backgroundColor: 'var(--bg-card)',
+            borderRadius: 'var(--radius-xl)',
+            border: '1px solid var(--accent-border)',
+            boxShadow: ctaVisible ? '0 0 40px var(--accent-glow)' : 'none',
+            transition: 'box-shadow 0.5s ease',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Orange gradient top edge */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '2px',
+              background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
+              pointerEvents: 'none',
+            }}
+          />
+          <h2
+            style={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              margin: '0 0 10px',
+              letterSpacing: '-0.03em',
+            }}
+          >
             Ready to get started?
           </h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '32px' }}>
-            Create an account in minutes to schedule service bookings, check active mechanic milestones, and access invoices cleanly.
+          <p
+            style={{
+              fontSize: '14px',
+              color: 'var(--text-secondary)',
+              lineHeight: 1.7,
+              margin: '0 0 28px',
+            }}
+          >
+            Create an account in minutes. Schedule service bookings, track job card milestones, and access invoices — all in one place.
           </p>
           <Link
             to="/register"
             style={{
-              padding: '12px 32px',
-              backgroundColor: 'var(--accent)',
-              color: 'white',
-              borderRadius: 'var(--radius)',
-              fontSize: '15px',
-              fontWeight: 600,
-              textDecoration: 'none',
-              transition: 'background 0.15s',
               display: 'inline-block',
+              padding: '10px 28px',
+              backgroundColor: 'var(--accent)',
+              color: '#000',
+              borderRadius: 'var(--radius-lg)',
+              fontSize: '14px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              transition: 'all 0.15s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--accent-hover)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--accent)';
+              e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            Create An Account
+            Create Free Account
           </Link>
         </div>
       </section>
 
-      {/* 7. Footer */}
-      <footer style={{ padding: '32px 24px', backgroundColor: 'var(--bg-card)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '20px' }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '26px',
-                height: '26px',
-                backgroundColor: 'var(--accent)',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Wrench size={14} color="white" />
-            </div>
-            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+      {/* ── Footer ──────────────────────────────────────────────────────── */}
+      <footer style={{ padding: '20px 24px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Wrench size={14} color="var(--accent)" />
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
               AutoServe
             </span>
           </div>
-
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
             © {new Date().getFullYear()} AutoServe. All rights reserved.
           </span>
         </div>

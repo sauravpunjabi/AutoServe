@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axios';
 import { AuthBrandPanel, AuthFormPanel } from '../components/AuthShell';
-import { TextInput, PrimaryButton } from '../components/ui/primitives';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -25,26 +24,42 @@ const ForgotPassword = () => {
     }
   };
 
+  const inputBase: React.CSSProperties = {
+    width: '100%',
+    padding: '7px 10px',
+    backgroundColor: 'var(--bg)',
+    border: '1px solid var(--border-strong)',
+    borderRadius: 'var(--radius)',
+    fontSize: '13px',
+    color: 'var(--text-primary)',
+    outline: 'none',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+    fontFamily: 'Geist, sans-serif',
+  };
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
       <AuthBrandPanel />
       <AuthFormPanel>
-        <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-          Forgot password
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 32px' }}>
-          Enter your email and we'll send you a password reset link
-        </p>
+        <div style={{ marginBottom: '28px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+            Reset password
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+            Enter your email and we'll send a reset link
+          </p>
+        </div>
 
         {error && (
           <div
             style={{
-              marginBottom: '20px',
-              padding: '10px 12px',
+              marginBottom: '16px',
+              padding: '8px 12px',
               borderRadius: 'var(--radius)',
               backgroundColor: 'var(--danger-subtle)',
+              border: '1px solid rgba(239,68,68,0.2)',
               color: 'var(--danger)',
-              fontSize: '13px',
+              fontSize: '12px',
             }}
           >
             {error}
@@ -52,50 +67,110 @@ const ForgotPassword = () => {
         )}
 
         {success ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div
               style={{
                 padding: '12px 14px',
                 borderRadius: 'var(--radius)',
                 backgroundColor: 'var(--success-subtle)',
+                border: '1px solid rgba(34,197,94,0.2)',
                 color: 'var(--success)',
-                fontSize: '13px',
-                lineHeight: 1.5,
+                fontSize: '12px',
+                lineHeight: 1.6,
               }}
             >
               {success}
             </div>
-            <p style={{ textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-              <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
-                Return to sign in
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
+              <Link
+                to="/login"
+                style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600, transition: 'color 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
+              >
+                ← Return to sign in
               </Link>
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px' }}>
                 Email address
               </label>
-              <TextInput
+              <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@example.com"
+                style={inputBase}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--accent)';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-glow)';
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-strong)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               />
             </div>
-            <PrimaryButton type="submit" disabled={submitting} style={{ width: '100%', marginTop: '8px' }}>
-              {submitting ? 'Sending link…' : 'Send reset link'}
-            </PrimaryButton>
-            <p style={{ marginTop: '16px', textAlign: 'center', fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-              <Link to="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>
-                Back to sign in
+
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                width: '100%',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginTop: '4px',
+                backgroundColor: submitting ? 'var(--bg-elevated)' : 'var(--accent)',
+                color: submitting ? 'var(--text-muted)' : '#000',
+                border: 'none',
+                borderRadius: 'var(--radius)',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                transition: 'all 0.15s ease',
+                opacity: submitting ? 0.6 : 1,
+                fontFamily: 'Geist, sans-serif',
+              }}
+              onMouseEnter={(e) => {
+                if (!submitting) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent-hover)';
+                  (e.currentTarget as HTMLElement).style.transform = 'scale(1.01)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!submitting) {
+                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent)';
+                  (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                }
+              }}
+            >
+              {submitting && (
+                <span style={{ width: '12px', height: '12px', border: '2px solid rgba(0,0,0,0.2)', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.7s linear infinite', flexShrink: 0 }} />
+              )}
+              {submitting ? 'Sending…' : 'Send reset link'}
+            </button>
+
+            <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+              <Link
+                to="/login"
+                style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600, transition: 'color 0.15s ease' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--accent-hover)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--accent)'; }}
+              >
+                ← Back to sign in
               </Link>
             </p>
           </form>
         )}
       </AuthFormPanel>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };
