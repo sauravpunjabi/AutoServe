@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, Fragment } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Calendar, Wrench, Clock, FileText, Shield, Users, Zap } from 'lucide-react';
+import { Car, Calendar, Wrench, Clock, FileText, Shield, Users } from 'lucide-react';
 
 function useCountUp(end: number, duration: number = 2000, active: boolean = false) {
   const [count, setCount] = useState(0);
@@ -49,13 +49,6 @@ const steps = [
   { n: '04', icon: FileText, title: 'Get Invoice', desc: 'View itemized breakdowns and invoices once tasks complete.' },
 ];
 
-const metrics = [
-  { value: '10K+', label: 'Vehicles Serviced' },
-  { value: '50+', label: 'Expert Mechanics' },
-  { value: '98%', label: 'Satisfaction Rate' },
-  { value: '24/7', label: 'Support' },
-];
-
 const heroWords = ['The', 'smarter', 'way', 'to', 'manage', 'vehicle', 'services.'];
 
 export default function Landing() {
@@ -65,7 +58,6 @@ export default function Landing() {
   const { ref: statsRef, inView: statsVisible } = useInView();
   const { ref: featRef } = useInView();
   const { ref: stepsRef, inView: stepsVisible } = useInView();
-  const { ref: ctaRef, inView: ctaVisible } = useInView();
 
   const vehicles = useCountUp(10000, 2200, statsVisible);
   const satisfaction = useCountUp(98, 1600, statsVisible);
@@ -117,7 +109,6 @@ export default function Landing() {
                 fontWeight: 500,
                 textDecoration: 'none',
                 borderRadius: 'var(--radius)',
-                border: 'none',
                 transition: 'color 0.15s ease',
               }}
               onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; }}
@@ -153,49 +144,25 @@ export default function Landing() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '48px 24px 60px',
-          position: 'relative',
-          overflow: 'hidden',
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
+          padding: '48px 24px 80px',
         }}
       >
-        {/* Orange glow */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '30%',
-            left: '50%',
-            width: '600px',
-            height: '600px',
-            background: 'radial-gradient(circle, rgba(249,115,22,0.06) 0%, transparent 70%)',
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        <div style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center', position: 'relative' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', textAlign: 'center' }}>
           {/* Eyebrow */}
-          <div
+          <p
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '4px 10px',
-              borderRadius: '20px',
-              border: '1px solid var(--accent-border)',
               fontSize: '10px',
               fontWeight: 500,
               color: 'var(--accent)',
               textTransform: 'uppercase',
               letterSpacing: '0.15em',
-              marginBottom: '20px',
+              margin: '0 0 20px',
               opacity: mounted ? 1 : 0,
               transition: 'opacity 0.4s ease',
             }}
           >
-            <Zap size={10} />
             Vehicle Service Management
-          </div>
+          </p>
 
           {/* Headline */}
           <h1
@@ -249,7 +216,6 @@ export default function Landing() {
               justifyContent: 'center',
               gap: '12px',
               flexWrap: 'wrap',
-              marginBottom: '48px',
               opacity: mounted ? 1 : 0,
               transform: mounted ? 'translateY(0)' : 'translateY(8px)',
               transition: 'opacity 0.4s ease 0.4s, transform 0.4s ease 0.4s',
@@ -261,8 +227,8 @@ export default function Landing() {
                 padding: '10px 22px',
                 backgroundColor: 'var(--accent)',
                 color: '#000',
-                borderRadius: 'var(--radius-lg)',
-                fontSize: '14px',
+                borderRadius: 'var(--radius)',
+                fontSize: '13px',
                 fontWeight: 700,
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
@@ -285,9 +251,9 @@ export default function Landing() {
                 backgroundColor: 'transparent',
                 color: 'var(--text-secondary)',
                 border: '1px solid var(--border-strong)',
-                borderRadius: 'var(--radius-lg)',
-                fontSize: '14px',
-                fontWeight: 600,
+                borderRadius: 'var(--radius)',
+                fontSize: '13px',
+                fontWeight: 500,
                 textDecoration: 'none',
                 transition: 'all 0.15s ease',
               }}
@@ -303,60 +269,25 @@ export default function Landing() {
               Sign In
             </Link>
           </div>
-
-          {/* Floating metrics */}
-          <div
-            className="stagger-children"
-            style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}
-          >
-            {metrics.map(({ value, label }) => (
-              <div
-                key={label}
-                style={{
-                  padding: '12px 20px',
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  textAlign: 'center',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
-                  (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-                  (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
-                }}
-              >
-                <div style={{ fontSize: '20px', fontFamily: 'Geist Mono, monospace', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-                  {value}
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '2px' }}>
-                  {label}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
       {/* ── Features ────────────────────────────────────────────────────── */}
       <section ref={featRef} style={{ padding: '80px 24px', backgroundColor: 'var(--bg-card)', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div style={{ marginBottom: '48px' }}>
             <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
               Features
             </p>
-            <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 12px', letterSpacing: '-0.02em' }}>
+            <h2 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
               Everything you need to run service operations
             </h2>
-            <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '460px', margin: '0 auto', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '460px', margin: 0, lineHeight: 1.6 }}>
               A centralized digital platform designed to optimize every stage of vehicle maintenance.
             </p>
           </div>
 
-          {/* 3x2 grid with gap 1px — touching borders effect */}
+          {/* 3×2 touching-borders grid */}
           <div
             style={{
               display: 'grid',
@@ -419,12 +350,12 @@ export default function Landing() {
       {/* ── How it works ────────────────────────────────────────────────── */}
       <section ref={stepsRef} style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <div style={{ marginBottom: '48px' }}>
             <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 10px' }}>
               How It Works
             </p>
-            <h2 style={{ fontSize: '32px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-              Four simple steps
+            <h2 style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+              Four steps from booking to invoice
             </h2>
           </div>
 
@@ -434,36 +365,24 @@ export default function Landing() {
           >
             {steps.map(({ n, icon: Icon, title, desc }, i) => (
               <Fragment key={n}>
-                <div style={{ flex: 1, textAlign: 'center', padding: '0 16px' }}>
+                <div style={{ flex: 1, padding: '0 20px 0 0' }}>
                   <p
                     style={{
                       fontSize: '11px',
                       fontFamily: 'Geist Mono, monospace',
                       fontWeight: 500,
                       color: 'var(--accent)',
-                      margin: '0 0 10px',
+                      margin: '0 0 12px',
                     }}
                   >
                     {n}
                   </p>
-                  <div
-                    style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '8px',
-                      backgroundColor: 'var(--accent-subtle)',
-                      border: '1px solid var(--accent-border)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 12px',
-                    }}
-                  >
-                    <Icon size={16} color="var(--accent)" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Icon size={14} color="var(--text-secondary)" />
+                    <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+                      {title}
+                    </h3>
                   </div>
-                  <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px' }}>
-                    {title}
-                  </h3>
                   <p style={{ fontSize: '12px', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
                     {desc}
                   </p>
@@ -471,10 +390,11 @@ export default function Landing() {
                 {i < steps.length - 1 && (
                   <div
                     style={{
-                      width: '40px',
+                      width: '1px',
+                      alignSelf: 'stretch',
+                      backgroundColor: 'var(--border)',
                       flexShrink: 0,
-                      borderTop: '1px dashed var(--border-strong)',
-                      marginTop: '18px',
+                      margin: '0 20px 0 0',
                     }}
                   />
                 )}
@@ -485,21 +405,8 @@ export default function Landing() {
       </section>
 
       {/* ── Stats bar ───────────────────────────────────────────────────── */}
-      <section
-        ref={statsRef}
-        style={{
-          backgroundColor: 'var(--bg-card)',
-          borderBottom: '1px solid var(--border)',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '960px',
-            margin: '0 auto',
-            display: 'flex',
-            padding: '0',
-          }}
-        >
+      <section ref={statsRef} style={{ backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex' }}>
           {[
             { value: statsVisible ? `${vehicles.toLocaleString()}+` : '0+', label: 'Vehicles Serviced' },
             { value: statsVisible ? `${satisfaction}%` : '0%', label: 'Satisfaction Rate' },
@@ -517,12 +424,12 @@ export default function Landing() {
             >
               <div
                 style={{
-                  fontSize: '32px',
+                  fontSize: '28px',
                   fontWeight: 700,
                   color: 'var(--text-primary)',
                   fontFamily: 'Geist Mono, monospace',
                   letterSpacing: '-0.03em',
-                  marginBottom: '6px',
+                  marginBottom: '4px',
                 }}
               >
                 {value}
@@ -536,36 +443,14 @@ export default function Landing() {
       </section>
 
       {/* ── CTA ─────────────────────────────────────────────────────────── */}
-      <section ref={ctaRef} style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)', textAlign: 'center' }}>
-        <div
-          style={{
-            maxWidth: '560px',
-            margin: '0 auto',
-            padding: '48px',
-            backgroundColor: 'var(--bg-card)',
-            borderRadius: 'var(--radius-xl)',
-            border: '1px solid var(--accent-border)',
-            boxShadow: ctaVisible ? '0 0 40px var(--accent-glow)' : 'none',
-            transition: 'box-shadow 0.5s ease',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Orange gradient top edge */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '2px',
-              background: 'linear-gradient(90deg, transparent, var(--accent), transparent)',
-              pointerEvents: 'none',
-            }}
-          />
+      <section style={{ padding: '80px 24px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto' }}>
+          <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 16px' }}>
+            Get Started
+          </p>
           <h2
             style={{
-              fontSize: '24px',
+              fontSize: '28px',
               fontWeight: 700,
               color: 'var(--text-primary)',
               margin: '0 0 10px',
@@ -588,11 +473,11 @@ export default function Landing() {
             to="/register"
             style={{
               display: 'inline-block',
-              padding: '10px 28px',
+              padding: '9px 22px',
               backgroundColor: 'var(--accent)',
               color: '#000',
-              borderRadius: 'var(--radius-lg)',
-              fontSize: '14px',
+              borderRadius: 'var(--radius)',
+              fontSize: '13px',
               fontWeight: 700,
               textDecoration: 'none',
               transition: 'all 0.15s ease',

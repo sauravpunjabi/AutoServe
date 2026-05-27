@@ -1,26 +1,42 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorize = require("../middleware/authMiddleware");
+const { userWriteLimiter } = require("../middleware/rateLimiter");
+const { validateString, validateOptionalString, firstError } = require("../middleware/validate");
 
-router.post("/parts", authorize, async (req, res) => {
+const MAX_PRICE = 9_999_999;
+const MAX_QUANTITY = 999_999;
+
+// ─── POST /parts ──────────────────────────────────────────────────────────────
+router.post("/parts", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
     const { name, description, unit_price } = req.body;
-    if (!name || unit_price === undefined || unit_price === null) {
-      return res.status(400).json({ success: false, message: "name and unit_price are required." });
-    }
 
+    // ── Input validation ─────────────────────────────────────────────────────
+    const err = firstError(
+      validateString(name, "name", 100),
+      validateOptionalString(description, "description", 500)
+    );
+    if (err) return res.status(400).json({ success: false, message: err });
+
+    if (unit_price === undefined || unit_price === null) {
+      return res.status(400).json({ success: false, message: "unit_price is required." });
+    }
     const price = Number(unit_price);
-    if (Number.isNaN(price) || price <= 0) {
-      return res.status(400).json({ success: false, message: "unit_price must be a positive number." });
+    if (Number.isNaN(price) || price <= 0 || price > MAX_PRICE) {
+      return res.status(400).json({
+        success: false,
+        message: `unit_price must be a positive number no greater than ${MAX_PRICE}.`,
+      });
     }
 
     const part = await pool.query(
       "INSERT INTO parts (name, description, unit_price) VALUES ($1, $2, $3) RETURNING *",
-      [name, description || null, price]
+      [name.trim(), description ? description.trim() : null, price]
     );
     res.json({ success: true, data: part.rows[0] });
   } catch (err) {
@@ -29,7 +45,8 @@ router.post("/parts", authorize, async (req, res) => {
   }
 });
 
-router.post("/", authorize, async (req, res) => {
+// ─── POST / ───────────────────────────────────────────────────────────────────
+router.post("/", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
@@ -45,8 +62,11 @@ router.post("/", authorize, async (req, res) => {
     }
 
     const qty = Number(quantity);
-    if (!Number.isInteger(qty) || qty < 0) {
-      return res.status(400).json({ success: false, message: "quantity must be a non-negative integer." });
+    if (!Number.isInteger(qty) || qty < 0 || qty > MAX_QUANTITY) {
+      return res.status(400).json({
+        success: false,
+        message: `quantity must be a non-negative integer no greater than ${MAX_QUANTITY}.`,
+      });
     }
 
     const inv = await pool.query(
@@ -64,6 +84,7 @@ router.post("/", authorize, async (req, res) => {
   }
 });
 
+// ─── GET /:serviceCenterId ────────────────────────────────────────────────────
 router.get("/:serviceCenterId", authorize, async (req, res) => {
   try {
     const { serviceCenterId } = req.params;
@@ -81,8 +102,16 @@ router.get("/:serviceCenterId", authorize, async (req, res) => {
   }
 });
 
-router.post("/job-parts/:id", authorize, async (req, res) => {
+// ─── POST /job-parts/:id ──────────────────────────────────────────────────────
+// OWASP A01 fix: was missing a role check — any authenticated user could
+// consume inventory and attach parts to a job card.
+// Restricted to mechanic and manager roles only.
+router.post("/job-parts/:id", authorize, userWriteLimiter, async (req, res) => {
   try {
+    if (!["mechanic", "manager"].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+
     const { id } = req.params;
     const { part_id, quantity_used, service_center_id } = req.body;
 
@@ -94,8 +123,11 @@ router.post("/job-parts/:id", authorize, async (req, res) => {
     }
 
     const qty = Number(quantity_used);
-    if (!Number.isInteger(qty) || qty <= 0) {
-      return res.status(400).json({ success: false, message: "quantity_used must be a positive integer." });
+    if (!Number.isInteger(qty) || qty <= 0 || qty > MAX_QUANTITY) {
+      return res.status(400).json({
+        success: false,
+        message: `quantity_used must be a positive integer no greater than ${MAX_QUANTITY}.`,
+      });
     }
 
     const stock = await pool.query(

@@ -1,8 +1,13 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorize = require("../middleware/authMiddleware");
+const { userWriteLimiter } = require("../middleware/rateLimiter");
+const { validateOptionalString } = require("../middleware/validate");
 
-router.post("/invoices", authorize, async (req, res) => {
+const MAX_LABOR_COST = 9_999_999;
+
+// ─── POST /invoices ───────────────────────────────────────────────────────────
+router.post("/invoices", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
@@ -18,13 +23,21 @@ router.post("/invoices", authorize, async (req, res) => {
     }
 
     const labor = Number(labor_cost);
-    if (Number.isNaN(labor) || labor < 0) {
-      return res.status(400).json({ success: false, message: "labor_cost must be a non-negative number." });
+    if (Number.isNaN(labor) || labor < 0 || labor > MAX_LABOR_COST) {
+      return res.status(400).json({
+        success: false,
+        message: `labor_cost must be a non-negative number no greater than ${MAX_LABOR_COST}.`,
+      });
     }
 
-    const existing = await pool.query("SELECT id FROM invoices WHERE job_card_id = $1", [job_card_id]);
+    const existing = await pool.query(
+      "SELECT id FROM invoices WHERE job_card_id = $1",
+      [job_card_id]
+    );
     if (existing.rows.length > 0) {
-      return res.status(400).json({ success: false, message: "Invoice already exists for this job card." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invoice already exists for this job card." });
     }
 
     const parts = await pool.query(
@@ -58,6 +71,7 @@ router.post("/invoices", authorize, async (req, res) => {
   }
 });
 
+// ─── GET /invoices/manager ────────────────────────────────────────────────────
 router.get("/invoices/manager", authorize, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
@@ -81,7 +95,8 @@ router.get("/invoices/manager", authorize, async (req, res) => {
   }
 });
 
-router.patch("/invoices/:id/pay", authorize, async (req, res) => {
+// ─── PATCH /invoices/:id/pay ──────────────────────────────────────────────────
+router.patch("/invoices/:id/pay", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "customer") {
       return res.status(403).json({ success: false, message: "Access Denied" });
@@ -112,6 +127,7 @@ router.patch("/invoices/:id/pay", authorize, async (req, res) => {
   }
 });
 
+// ─── GET /invoices/me ─────────────────────────────────────────────────────────
 router.get("/invoices/me", authorize, async (req, res) => {
   try {
     const invoices = await pool.query(
@@ -170,24 +186,35 @@ router.get("/invoices/me", authorize, async (req, res) => {
   }
 });
 
-router.post("/reviews", authorize, async (req, res) => {
+// ─── POST /reviews ────────────────────────────────────────────────────────────
+router.post("/reviews", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "customer") {
       return res.status(403).json({ success: false, message: "Only customers can leave reviews." });
     }
 
     const { service_center_id, rating, comment } = req.body;
-    if (!service_center_id || !rating) {
+
+    if (!service_center_id) {
       return res.status(400).json({ success: false, message: "Missing required fields." });
     }
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ success: false, message: "Rating must be between 1 and 5." });
+
+    // ── Input validation ─────────────────────────────────────────────────────
+    // rating must be a whole integer between 1 and 5 (not 4.5, not "5abc")
+    const ratingNum = Number(rating);
+    if (!rating || !Number.isInteger(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Rating must be a whole number between 1 and 5." });
     }
+
+    const commentErr = validateOptionalString(comment, "comment", 1000);
+    if (commentErr) return res.status(400).json({ success: false, message: commentErr });
 
     const review = await pool.query(
       `INSERT INTO service_center_reviews (service_center_id, customer_id, rating, comment)
        VALUES ($1, $2, $3, $4) RETURNING *`,
-      [service_center_id, req.user.id, rating, comment || null]
+      [service_center_id, req.user.id, ratingNum, comment ? comment.trim() : null]
     );
     res.json({ success: true, data: review.rows[0] });
   } catch (err) {
@@ -196,6 +223,7 @@ router.post("/reviews", authorize, async (req, res) => {
   }
 });
 
+// ─── GET /admin/users ─────────────────────────────────────────────────────────
 router.get("/admin/users", authorize, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
@@ -211,7 +239,8 @@ router.get("/admin/users", authorize, async (req, res) => {
   }
 });
 
-router.patch("/admin/users/:id/status", authorize, async (req, res) => {
+// ─── PATCH /admin/users/:id/status ───────────────────────────────────────────
+router.patch("/admin/users/:id/status", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({ success: false, message: "Access Denied" });
@@ -236,6 +265,7 @@ router.patch("/admin/users/:id/status", authorize, async (req, res) => {
   }
 });
 
+// ─── GET /admin/analytics ─────────────────────────────────────────────────────
 router.get("/admin/analytics", authorize, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
@@ -244,7 +274,9 @@ router.get("/admin/analytics", authorize, async (req, res) => {
 
     const usersCount = await pool.query("SELECT COUNT(*) FROM users");
     const bookingsCount = await pool.query("SELECT COUNT(*) FROM service_bookings");
-    const revenue = await pool.query("SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices");
+    const revenue = await pool.query(
+      "SELECT COALESCE(SUM(total_amount), 0) as total FROM invoices"
+    );
 
     const revenuePerCenter = await pool.query(`
       SELECT sc.name, COALESCE(SUM(i.total_amount), 0) as total_revenue

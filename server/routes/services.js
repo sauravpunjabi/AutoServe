@@ -1,7 +1,10 @@
 const router = require("express").Router();
 const pool = require("../db");
+const { publicReadLimiter } = require("../middleware/rateLimiter");
 
-router.get("/", async (req, res) => {
+// ─── GET / ────────────────────────────────────────────────────────────────────
+// Public endpoint — rate-limited to prevent automated scraping of the service catalog
+router.get("/", publicReadLimiter, async (req, res) => {
   try {
     const services = await pool.query(
       "SELECT * FROM services WHERE is_active = true ORDER BY name ASC"

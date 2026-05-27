@@ -1,29 +1,45 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorize = require("../middleware/authMiddleware");
+const { publicReadLimiter, userWriteLimiter } = require("../middleware/rateLimiter");
+const {
+  validateEmail,
+  validateString,
+  validatePhone,
+  firstError,
+} = require("../middleware/validate");
 
-router.post("/", authorize, async (req, res) => {
+// ─── POST / ───────────────────────────────────────────────────────────────────
+router.post("/", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
     }
 
     const { name, address, phone, email } = req.body;
-    if (!name || !address || !phone || !email) {
-      return res.status(400).json({
-        success: false,
-        message: "name, address, phone, and email are required.",
-      });
-    }
 
-    const existing = await pool.query("SELECT id FROM service_centers WHERE manager_id = $1", [req.user.id]);
+    // ── Input validation ─────────────────────────────────────────────────────
+    const err = firstError(
+      validateString(name, "Name", 100),
+      validateString(address, "Address", 300),
+      validatePhone(phone, true),
+      validateEmail(email)
+    );
+    if (err) return res.status(400).json({ success: false, message: err });
+
+    const existing = await pool.query(
+      "SELECT id FROM service_centers WHERE manager_id = $1",
+      [req.user.id]
+    );
     if (existing.rows.length > 0) {
-      return res.status(400).json({ success: false, message: "You already manage a service center." });
+      return res
+        .status(400)
+        .json({ success: false, message: "You already manage a service center." });
     }
 
     const newCenter = await pool.query(
       "INSERT INTO service_centers (name, address, phone, email, manager_id) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [name, address, phone, email, req.user.id]
+      [name.trim(), address.trim(), phone.trim(), email.trim().toLowerCase(), req.user.id]
     );
 
     await pool.query(
@@ -38,7 +54,9 @@ router.post("/", authorize, async (req, res) => {
   }
 });
 
-router.get("/", async (req, res) => {
+// ─── GET / ────────────────────────────────────────────────────────────────────
+// Public listing — rate-limited to prevent scraping
+router.get("/", publicReadLimiter, async (req, res) => {
   try {
     const centers = await pool.query(`
       SELECT sc.*, u.name as manager_name,
@@ -56,6 +74,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ─── GET /:id/mechanics ───────────────────────────────────────────────────────
 router.get("/:id/mechanics", authorize, async (req, res) => {
   try {
     const mechanics = await pool.query(
@@ -70,7 +89,9 @@ router.get("/:id/mechanics", authorize, async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+// ─── GET /:id ─────────────────────────────────────────────────────────────────
+// Public detail — rate-limited to prevent scraping
+router.get("/:id", publicReadLimiter, async (req, res) => {
   try {
     const center = await pool.query(
       `SELECT sc.*, COALESCE(AVG(r.rating), 0) as average_rating
@@ -101,7 +122,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/:id/join", authorize, async (req, res) => {
+// ─── POST /:id/join ───────────────────────────────────────────────────────────
+router.post("/:id/join", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "mechanic") {
       return res.status(403).json({ success: false, message: "Only mechanics can join." });
@@ -118,7 +140,8 @@ router.post("/:id/join", authorize, async (req, res) => {
   }
 });
 
-router.patch("/:id/mechanics/:userId", authorize, async (req, res) => {
+// ─── PATCH /:id/mechanics/:userId ────────────────────────────────────────────
+router.patch("/:id/mechanics/:userId", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
@@ -126,13 +149,15 @@ router.patch("/:id/mechanics/:userId", authorize, async (req, res) => {
 
     const { status } = req.body;
     if (!status || !["active", "rejected"].includes(status)) {
-      return res.status(400).json({ success: false, message: "Status must be active or rejected." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Status must be active or rejected." });
     }
 
-    const center = await pool.query("SELECT id FROM service_centers WHERE manager_id = $1 AND id = $2", [
-      req.user.id,
-      req.params.id,
-    ]);
+    const center = await pool.query(
+      "SELECT id FROM service_centers WHERE manager_id = $1 AND id = $2",
+      [req.user.id, req.params.id]
+    );
     if (center.rows.length === 0) {
       return res.status(403).json({ success: false, message: "Not your service center." });
     }

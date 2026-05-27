@@ -1,10 +1,13 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorize = require("../middleware/authMiddleware");
+const { userWriteLimiter } = require("../middleware/rateLimiter");
+const { validateString, firstError } = require("../middleware/validate");
 
 const currentYear = new Date().getFullYear();
 
-router.post("/", authorize, async (req, res) => {
+// ─── POST / ───────────────────────────────────────────────────────────────────
+router.post("/", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "customer") {
       return res.status(403).json({ success: false, message: "Only customers can add vehicles." });
@@ -12,13 +15,17 @@ router.post("/", authorize, async (req, res) => {
 
     const { make, model, year, license_plate } = req.body;
 
-    if (!make || !model || !year || !license_plate) {
-      return res.status(400).json({
-        success: false,
-        message: "make, model, year, and license_plate are required.",
-      });
-    }
+    // ── Input validation ─────────────────────────────────────────────────────
+    const err = firstError(
+      validateString(make, "make", 60),
+      validateString(model, "model", 60),
+      validateString(license_plate, "license_plate", 20)
+    );
+    if (err) return res.status(400).json({ success: false, message: err });
 
+    if (!year) {
+      return res.status(400).json({ success: false, message: "year is required." });
+    }
     const yearNum = Number(year);
     if (!Number.isInteger(yearNum) || yearNum < 1900 || yearNum > currentYear + 1) {
       return res.status(400).json({
@@ -27,9 +34,17 @@ router.post("/", authorize, async (req, res) => {
       });
     }
 
+    // License plate: allow alphanumeric, hyphens, and spaces only
+    if (!/^[A-Za-z0-9\s\-]+$/.test(license_plate.trim())) {
+      return res.status(400).json({
+        success: false,
+        message: "License plate may only contain letters, numbers, hyphens, and spaces.",
+      });
+    }
+
     const newVehicle = await pool.query(
       "INSERT INTO vehicles (customer_id, make, model, year, license_plate) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [req.user.id, make, model, yearNum, license_plate]
+      [req.user.id, make.trim(), model.trim(), yearNum, license_plate.trim().toUpperCase()]
     );
     res.json({ success: true, data: newVehicle.rows[0] });
   } catch (err) {
@@ -41,9 +56,13 @@ router.post("/", authorize, async (req, res) => {
   }
 });
 
+// ─── GET / ────────────────────────────────────────────────────────────────────
 router.get("/", authorize, async (req, res) => {
   try {
-    const vehicles = await pool.query("SELECT * FROM vehicles WHERE customer_id = $1", [req.user.id]);
+    const vehicles = await pool.query(
+      "SELECT * FROM vehicles WHERE customer_id = $1",
+      [req.user.id]
+    );
     res.json({ success: true, data: vehicles.rows });
   } catch (err) {
     console.error(err.message);
@@ -51,7 +70,8 @@ router.get("/", authorize, async (req, res) => {
   }
 });
 
-router.delete("/:id", authorize, async (req, res) => {
+// ─── DELETE /:id ──────────────────────────────────────────────────────────────
+router.delete("/:id", authorize, userWriteLimiter, async (req, res) => {
   try {
     const { id } = req.params;
 

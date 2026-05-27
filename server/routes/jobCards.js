@@ -1,10 +1,13 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorize = require("../middleware/authMiddleware");
+const { userWriteLimiter } = require("../middleware/rateLimiter");
+const { validateString } = require("../middleware/validate");
 
 const JOB_STATUSES = ["open", "in_progress", "completed"];
 const TASK_STATUSES = ["pending", "in_progress", "completed"];
 
+// ─── GET / ────────────────────────────────────────────────────────────────────
 router.get("/", authorize, async (req, res) => {
   try {
     if (req.user.role === "mechanic") {
@@ -44,10 +47,13 @@ router.get("/", authorize, async (req, res) => {
   }
 });
 
+// ─── GET /:id ─────────────────────────────────────────────────────────────────
+// Scoped: mechanic sees only their assigned cards; manager sees only their center's cards.
 router.get("/:id", authorize, async (req, res) => {
   try {
     const jobRes = await pool.query(
       `SELECT jc.*, sb.service_type, sb.booking_date, sb.time_slot, sb.customer_id, sb.notes AS booking_notes,
+              sb.service_center_id,
               v.make, v.model, v.year, v.license_plate, u.name AS customer_name, u.email AS customer_email,
               m.name AS mechanic_name,
               (SELECT COALESCE(json_agg(json_build_object('id', svc.id, 'name', svc.name, 'price', bs.price)), '[]'::json)
@@ -64,6 +70,26 @@ router.get("/:id", authorize, async (req, res) => {
     if (jobRes.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Job card not found" });
     }
+
+    const job = jobRes.rows[0];
+    const { role } = req.user;
+
+    // Mechanic: must be assigned to this job card
+    if (role === "mechanic" && job.mechanic_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+
+    // Manager: job card must belong to their service center
+    if (role === "manager") {
+      const center = await pool.query(
+        "SELECT id FROM service_centers WHERE manager_id = $1 AND id = $2",
+        [req.user.id, job.service_center_id]
+      );
+      if (center.rows.length === 0) {
+        return res.status(403).json({ success: false, message: "Access Denied" });
+      }
+    }
+
     const tasks = await pool.query(
       "SELECT * FROM job_tasks WHERE job_card_id = $1 ORDER BY created_at ASC",
       [req.params.id]
@@ -76,7 +102,7 @@ router.get("/:id", authorize, async (req, res) => {
     );
     res.json({
       success: true,
-      data: { ...jobRes.rows[0], tasks: tasks.rows, parts: parts.rows },
+      data: { ...job, tasks: tasks.rows, parts: parts.rows },
     });
   } catch (err) {
     console.error(err.message);
@@ -84,7 +110,8 @@ router.get("/:id", authorize, async (req, res) => {
   }
 });
 
-router.patch("/:id/mechanic", authorize, async (req, res) => {
+// ─── PATCH /:id/mechanic ──────────────────────────────────────────────────────
+router.patch("/:id/mechanic", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
@@ -125,8 +152,15 @@ router.patch("/:id/mechanic", authorize, async (req, res) => {
   }
 });
 
-router.patch("/:id/status", authorize, async (req, res) => {
+// ─── PATCH /:id/status ────────────────────────────────────────────────────────
+// OWASP A01 fix: was missing a role check — any authenticated user could update
+// job card status. Restricted to mechanic and manager roles.
+router.patch("/:id/status", authorize, userWriteLimiter, async (req, res) => {
   try {
+    if (!["mechanic", "manager"].includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+
     const { id } = req.params;
     const { status } = req.body;
 
@@ -148,10 +182,7 @@ router.patch("/:id/status", authorize, async (req, res) => {
     const updatedJob = updated.rows[0];
     const io = req.app.get("socketio");
     if (io) {
-      io.emit("job_updated", {
-        job_card_id: id,
-        status: updatedJob.status,
-      });
+      io.emit("job_updated", { job_card_id: id, status: updatedJob.status });
     }
 
     res.json({ success: true, data: updatedJob });
@@ -161,14 +192,15 @@ router.patch("/:id/status", authorize, async (req, res) => {
   }
 });
 
-router.post("/:id/tasks", authorize, async (req, res) => {
+// ─── POST /:id/tasks ──────────────────────────────────────────────────────────
+router.post("/:id/tasks", authorize, userWriteLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { description } = req.body;
 
-    if (!description || !description.trim()) {
-      return res.status(400).json({ success: false, message: "Task description is required." });
-    }
+    // ── Input validation ─────────────────────────────────────────────────────
+    const err = validateString(description, "description", 500);
+    if (err) return res.status(400).json({ success: false, message: err });
 
     const task = await pool.query(
       "INSERT INTO job_tasks (job_card_id, description) VALUES ($1, $2) RETURNING *",
@@ -181,7 +213,8 @@ router.post("/:id/tasks", authorize, async (req, res) => {
   }
 });
 
-router.patch("/tasks/:taskId/status", authorize, async (req, res) => {
+// ─── PATCH /tasks/:taskId/status ──────────────────────────────────────────────
+router.patch("/tasks/:taskId/status", authorize, userWriteLimiter, async (req, res) => {
   try {
     const { taskId } = req.params;
     const { status } = req.body;

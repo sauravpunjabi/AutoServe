@@ -1,8 +1,14 @@
 const router = require("express").Router();
 const pool = require("../db");
 const authorize = require("../middleware/authMiddleware");
+const { publicReadLimiter, userWriteLimiter } = require("../middleware/rateLimiter");
+const { validateDate, validateOptionalString, firstError } = require("../middleware/validate");
 
 const BOOKING_STATUSES = ["pending", "approved", "rejected", "completed"];
+const ALLOWED_TIME_SLOTS = [
+  "08:00", "09:00", "10:00", "11:00",
+  "12:00", "13:00", "14:00", "15:00", "16:00", "17:00",
+];
 
 // Correlated subqueries reused in every SELECT
 const SERVICES_JSON = `(
@@ -16,7 +22,8 @@ const SERVICES_TOTAL = `(
   FROM booking_services bs WHERE bs.booking_id = sb.id
 ) AS services_total`;
 
-router.post("/", authorize, async (req, res) => {
+// ─── POST / ───────────────────────────────────────────────────────────────────
+router.post("/", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "customer") {
       return res.status(403).json({ success: false, message: "Only customers can create bookings." });
@@ -24,15 +31,30 @@ router.post("/", authorize, async (req, res) => {
 
     const { service_center_id, vehicle_id, booking_date, time_slot, service_ids, notes } = req.body;
 
-    if (!service_center_id || !vehicle_id || !booking_date || !time_slot) {
+    if (!service_center_id || !vehicle_id) {
       return res.status(400).json({
         success: false,
         message: "service_center_id, vehicle_id, booking_date, and time_slot are required.",
       });
     }
 
+    // ── Input validation ─────────────────────────────────────────────────────
+    const err = firstError(
+      validateDate(booking_date, "booking_date"),
+      !time_slot ? "time_slot is required." : null,
+      time_slot && !ALLOWED_TIME_SLOTS.includes(time_slot)
+        ? `time_slot must be one of: ${ALLOWED_TIME_SLOTS.join(", ")}.`
+        : null,
+      validateOptionalString(notes, "notes", 1000)
+    );
+    if (err) return res.status(400).json({ success: false, message: err });
+
     if (!Array.isArray(service_ids) || service_ids.length === 0) {
       return res.status(400).json({ success: false, message: "At least one service must be selected." });
+    }
+    // Cap the number of services per booking to prevent abuse
+    if (service_ids.length > 20) {
+      return res.status(400).json({ success: false, message: "A maximum of 20 services per booking is allowed." });
     }
 
     const vehicle = await pool.query(
@@ -73,6 +95,7 @@ router.post("/", authorize, async (req, res) => {
   }
 });
 
+// ─── GET / ────────────────────────────────────────────────────────────────────
 router.get("/", authorize, async (req, res) => {
   try {
     if (req.user.role === "customer") {
@@ -107,14 +130,49 @@ router.get("/", authorize, async (req, res) => {
   }
 });
 
-router.get("/calendar/:serviceCenterId", async (req, res) => {
+// ─── GET /calendar/:serviceCenterId ──────────────────────────────────────────
+// OWASP A01 fix: was fully public and leaked customer PII (name, vehicle info).
+// Now unauthenticated callers receive only slot availability (date + time + status).
+// Authenticated managers of this center receive full detail.
+router.get("/calendar/:serviceCenterId", publicReadLimiter, async (req, res) => {
   try {
     const { serviceCenterId } = req.params;
+
+    // Attempt to read an authenticated user from the token header (optional auth)
+    let callerIsManager = false;
+    const rawToken = req.header("token");
+    if (rawToken) {
+      try {
+        const jwt = require("jsonwebtoken");
+        const payload = jwt.verify(rawToken, process.env.JWT_SECRET);
+        const center = await pool.query(
+          "SELECT id FROM service_centers WHERE id = $1 AND manager_id = $2",
+          [serviceCenterId, payload.user.id]
+        );
+        callerIsManager = center.rows.length > 0;
+      } catch {
+        // Invalid token — treat as unauthenticated
+      }
+    }
+
+    if (callerIsManager) {
+      // Full view for the owning manager
+      const bookings = await pool.query(
+        `SELECT sb.booking_date, sb.time_slot, u.name AS customer_name,
+                v.make, v.model, sb.status, sb.service_type
+         FROM service_bookings sb
+         JOIN users u ON sb.customer_id = u.id
+         JOIN vehicles v ON sb.vehicle_id = v.id
+         WHERE sb.service_center_id = $1`,
+        [serviceCenterId]
+      );
+      return res.json({ success: true, data: bookings.rows });
+    }
+
+    // Public view — only availability data, no PII
     const bookings = await pool.query(
-      `SELECT sb.booking_date, sb.time_slot, u.name AS customer_name, v.make, v.model, sb.status, sb.service_type
+      `SELECT sb.booking_date, sb.time_slot, sb.status
        FROM service_bookings sb
-       JOIN users u ON sb.customer_id = u.id
-       JOIN vehicles v ON sb.vehicle_id = v.id
        WHERE sb.service_center_id = $1`,
       [serviceCenterId]
     );
@@ -125,8 +183,16 @@ router.get("/calendar/:serviceCenterId", async (req, res) => {
   }
 });
 
+// ─── GET /:id ─────────────────────────────────────────────────────────────────
+// OWASP A01 fix: was missing an ownership check — any authenticated user could
+// read any booking. Now enforces role-based scope:
+//   customer → only their own bookings
+//   manager  → only bookings at their service center
+//   mechanic → only bookings linked to a job card assigned to them
 router.get("/:id", authorize, async (req, res) => {
   try {
+    const { id } = req.params;
+
     const booking = await pool.query(
       `SELECT sb.*, v.make, v.model, v.year, v.license_plate,
               u.name AS customer_name, u.email AS customer_email,
@@ -135,19 +201,48 @@ router.get("/:id", authorize, async (req, res) => {
        JOIN vehicles v ON sb.vehicle_id = v.id
        JOIN users u ON sb.customer_id = u.id
        WHERE sb.id = $1`,
-      [req.params.id]
+      [id]
     );
     if (booking.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Booking not found" });
     }
-    res.json({ success: true, data: booking.rows[0] });
+
+    const b = booking.rows[0];
+    const { role } = req.user;
+
+    if (role === "customer" && b.customer_id !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Access Denied" });
+    }
+
+    if (role === "manager") {
+      const center = await pool.query(
+        "SELECT id FROM service_centers WHERE manager_id = $1 AND id = $2",
+        [req.user.id, b.service_center_id]
+      );
+      if (center.rows.length === 0) {
+        return res.status(403).json({ success: false, message: "Access Denied" });
+      }
+    }
+
+    if (role === "mechanic") {
+      const assigned = await pool.query(
+        "SELECT id FROM job_cards WHERE booking_id = $1 AND mechanic_id = $2",
+        [id, req.user.id]
+      );
+      if (assigned.rows.length === 0) {
+        return res.status(403).json({ success: false, message: "Access Denied" });
+      }
+    }
+
+    res.json({ success: true, data: b });
   } catch (err) {
     console.error(err.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-router.patch("/:id/status", authorize, async (req, res) => {
+// ─── PATCH /:id/status ────────────────────────────────────────────────────────
+router.patch("/:id/status", authorize, userWriteLimiter, async (req, res) => {
   try {
     if (req.user.role !== "manager") {
       return res.status(403).json({ success: false, message: "Access Denied" });
