@@ -11,8 +11,8 @@ import {
   TextInput,
   TextSelect,
   TextLink,
-} from '../../components/ui/primitives';
-import LoadingPage from '../../components/ui/LoadingPage';
+  SkeletonText,
+} from '../../components/ui';
 
 const labelStyle = { display: 'block', marginBottom: '20px' } as const;
 
@@ -77,7 +77,9 @@ export default function CustomerBookService() {
         subtitle="Schedule an appointment at your preferred service center."
         navLinks={customerNav}
       >
-        <LoadingPage />
+        <div style={{ maxWidth: '640px' }}>
+          <SkeletonText lines={10} />
+        </div>
       </AppLayout>
     );
   }
@@ -88,7 +90,7 @@ export default function CustomerBookService() {
       subtitle="Schedule an appointment at your preferred service center."
       navLinks={customerNav}
     >
-      <div style={{ maxWidth: '640px' }}>
+      <div style={{ maxWidth: '640px', animation: 'fadeInUp 0.25s ease forwards' }}>
         <Card>
           <form onSubmit={handleSubmit}>
             <label style={labelStyle}>

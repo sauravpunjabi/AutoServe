@@ -114,7 +114,6 @@ export default function AppLayout({ children, title, subtitle, navLinks, actions
               <Link
                 key={path}
                 to={path}
-                title={!expanded ? name : undefined}
                 onMouseEnter={() => setHoveredPath(path)}
                 onMouseLeave={() => setHoveredPath(null)}
                 style={{
@@ -125,16 +124,17 @@ export default function AppLayout({ children, title, subtitle, navLinks, actions
                   padding: '0 8px',
                   justifyContent: expanded ? 'flex-start' : 'center',
                   borderRadius: 'var(--radius)',
-                  borderLeft: `2px solid ${isActive ? 'var(--accent)' : 'transparent'}`,
+                  borderLeft: `2px solid ${isActive ? '#f97316' : 'transparent'}`,
                   backgroundColor: isActive
-                    ? 'var(--accent-subtle)'
+                    ? 'rgba(249, 115, 22, 0.08)'
                     : isItemHovered
-                    ? 'var(--bg-hover)'
+                    ? '#141414'
                     : 'transparent',
-                  color: isActive ? 'var(--accent)' : isItemHovered ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  color: isActive ? '#fafafa' : isItemHovered ? '#fafafa' : '#717171',
                   textDecoration: 'none',
-                  transition: 'background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease',
-                  overflow: 'hidden',
+                  transition: 'background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease',
+                  overflow: expanded ? 'hidden' : 'visible',
+                  position: 'relative',
                   flexShrink: 0,
                 }}
               >
@@ -143,14 +143,14 @@ export default function AppLayout({ children, title, subtitle, navLinks, actions
                   style={{
                     flexShrink: 0,
                     color: isActive
-                      ? 'var(--accent)'
+                      ? '#f97316'
                       : isItemHovered
-                      ? 'var(--text-primary)'
-                      : 'var(--text-secondary)',
-                    transition: 'color 0.15s ease',
+                      ? '#fafafa'
+                      : '#717171',
+                    transition: 'color 0.1s ease',
                   }}
                 />
-                {expanded && (
+                {expanded ? (
                   <span
                     style={{
                       fontSize: '13px',
@@ -160,6 +160,10 @@ export default function AppLayout({ children, title, subtitle, navLinks, actions
                   >
                     {name}
                   </span>
+                ) : (
+                  <div className="sidebar-tooltip">
+                    {name}
+                  </div>
                 )}
               </Link>
             );

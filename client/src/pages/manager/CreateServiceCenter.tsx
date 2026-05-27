@@ -4,9 +4,8 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { managerNav } from '../../lib/nav';
-import LoadingPage from '../../components/ui/LoadingPage';
 import { useManagerCenter } from '../../hooks/useManagerCenter';
-import { Card, SectionLabel, TextInput, PrimaryButton } from '../../components/ui/primitives';
+import { Card, SectionLabel, TextInput, PrimaryButton, Skeleton, SkeletonText } from '../../components/ui';
 
 const fieldLabel: React.CSSProperties = {
   fontSize: '11px',
@@ -46,7 +45,12 @@ export default function CreateServiceCenter() {
   if (centerLoading) {
     return (
       <AppLayout title="Create service center" subtitle="Set up your center." navLinks={managerNav}>
-        <LoadingPage />
+        <Card style={{ maxWidth: '420px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <Skeleton width="100px" height="14px" />
+            <SkeletonText lines={4} />
+          </div>
+        </Card>
       </AppLayout>
     );
   }
@@ -57,25 +61,27 @@ export default function CreateServiceCenter() {
       subtitle="Set up your center to start accepting bookings."
       navLinks={managerNav}
     >
-      <Card style={{ maxWidth: '420px' }}>
-        <SectionLabel>New center</SectionLabel>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {(['name', 'address', 'phone', 'email'] as const).map((field) => (
-            <div key={field}>
-              <p style={fieldLabel}>{field}</p>
-              <TextInput
-                required
-                type={field === 'email' ? 'email' : 'text'}
-                value={form[field]}
-                onChange={(e) => setForm({ ...form, [field]: e.target.value })}
-              />
-            </div>
-          ))}
-          <PrimaryButton type="submit" disabled={submitting} style={{ alignSelf: 'flex-start', marginTop: '8px' }}>
-            {submitting ? 'Creating…' : 'Create center'}
-          </PrimaryButton>
-        </form>
-      </Card>
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        <Card style={{ maxWidth: '420px' }}>
+          <SectionLabel>New center</SectionLabel>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {(['name', 'address', 'phone', 'email'] as const).map((field) => (
+              <div key={field}>
+                <p style={fieldLabel}>{field}</p>
+                <TextInput
+                  required
+                  type={field === 'email' ? 'email' : 'text'}
+                  value={form[field]}
+                  onChange={(e) => setForm({ ...form, [field]: e.target.value })}
+                />
+              </div>
+            ))}
+            <PrimaryButton type="submit" disabled={submitting} style={{ alignSelf: 'flex-start', marginTop: '8px' }}>
+              {submitting ? 'Creating…' : 'Create center'}
+            </PrimaryButton>
+          </form>
+        </Card>
+      </div>
     </AppLayout>
   );
 }

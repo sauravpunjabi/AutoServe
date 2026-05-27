@@ -38,7 +38,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)', animation: 'fadeInUp 0.25s ease forwards' }}>
       <AuthBrandPanel />
       <AuthFormPanel>
         <div style={{ marginBottom: '28px' }}>
@@ -107,7 +107,7 @@ const ForgotPassword = () => {
                 style={inputBase}
                 onFocus={(e) => {
                   e.currentTarget.style.borderColor = 'var(--accent)';
-                  e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-glow)';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(249,115,22,0.1)';
                 }}
                 onBlur={(e) => {
                   e.currentTarget.style.borderColor = 'var(--border-strong)';
@@ -134,20 +134,28 @@ const ForgotPassword = () => {
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: submitting ? 'not-allowed' : 'pointer',
-                transition: 'all 0.15s ease',
-                opacity: submitting ? 0.6 : 1,
+                transition: 'filter 0.15s ease, transform 0.1s ease',
+                opacity: submitting ? 0.45 : 1,
                 fontFamily: 'Geist, sans-serif',
               }}
               onMouseEnter={(e) => {
                 if (!submitting) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent-hover)';
-                  (e.currentTarget as HTMLElement).style.transform = 'scale(1.01)';
+                  e.currentTarget.style.filter = 'brightness(1.1)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (!submitting) {
-                  (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent)';
-                  (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                  e.currentTarget.style.filter = 'brightness(1)';
+                }
+              }}
+              onMouseDown={(e) => {
+                if (!submitting) {
+                  e.currentTarget.style.transform = 'scale(0.97)';
+                }
+              }}
+              onMouseUp={(e) => {
+                if (!submitting) {
+                  e.currentTarget.style.transform = 'scale(1)';
                 }
               }}
             >

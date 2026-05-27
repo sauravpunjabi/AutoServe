@@ -3,8 +3,6 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { managerNav } from '../../lib/nav';
-import LoadingPage from '../../components/ui/LoadingPage';
-import EmptyState from '../../components/ui/EmptyState';
 import { useManagerCenter } from '../../hooks/useManagerCenter';
 import { Package } from 'lucide-react';
 import {
@@ -15,7 +13,9 @@ import {
   TableWrap,
   thStyle,
   tdStyle,
-} from '../../components/ui/primitives';
+  EmptyState,
+  SkeletonTable,
+} from '../../components/ui';
 
 export default function ManagerInventory() {
   const { centerId, loading: centerLoading } = useManagerCenter();
@@ -72,7 +72,12 @@ export default function ManagerInventory() {
   if (loading || centerLoading) {
     return (
       <AppLayout title="Inventory" subtitle="Manage parts and stock levels." navLinks={managerNav}>
-        <LoadingPage />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <Card>
+            <SkeletonTable rows={2} />
+          </Card>
+          <SkeletonTable rows={5} />
+        </div>
       </AppLayout>
     );
   }
@@ -93,137 +98,139 @@ export default function ManagerInventory() {
 
   return (
     <AppLayout title="Inventory" subtitle="Manage parts and stock levels." navLinks={managerNav}>
-      <Card style={{ marginBottom: '24px' }}>
-        <SectionLabel>Add part</SectionLabel>
-        <form onSubmit={handleAddPart}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '12px',
-            }}
-          >
-            <TextInput
-              required
-              placeholder="Part name"
-              value={partForm.name}
-              onChange={(e) => setPartForm({ ...partForm, name: e.target.value })}
-            />
-            <TextInput
-              placeholder="Description"
-              value={partForm.description}
-              onChange={(e) => setPartForm({ ...partForm, description: e.target.value })}
-            />
-            <TextInput
-              required
-              type="number"
-              step="0.01"
-              placeholder="Unit price"
-              value={partForm.unit_price}
-              onChange={(e) => setPartForm({ ...partForm, unit_price: e.target.value })}
-            />
-            <TextInput
-              required
-              type="number"
-              placeholder="Initial quantity"
-              value={stockForm.quantity}
-              onChange={(e) => setStockForm({ ...stockForm, quantity: e.target.value })}
-            />
-          </div>
-          <PrimaryButton type="submit" disabled={submitting} style={{ marginTop: '16px' }}>
-            {submitting ? 'Adding…' : 'Add to inventory'}
-          </PrimaryButton>
-        </form>
-      </Card>
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        <Card style={{ marginBottom: '24px' }}>
+          <SectionLabel>Add part</SectionLabel>
+          <form onSubmit={handleAddPart}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '12px',
+              }}
+            >
+              <TextInput
+                required
+                placeholder="Part name"
+                value={partForm.name}
+                onChange={(e) => setPartForm({ ...partForm, name: e.target.value })}
+              />
+              <TextInput
+                placeholder="Description"
+                value={partForm.description}
+                onChange={(e) => setPartForm({ ...partForm, description: e.target.value })}
+              />
+              <TextInput
+                required
+                type="number"
+                step="0.01"
+                placeholder="Unit price"
+                value={partForm.unit_price}
+                onChange={(e) => setPartForm({ ...partForm, unit_price: e.target.value })}
+              />
+              <TextInput
+                required
+                type="number"
+                placeholder="Initial quantity"
+                value={stockForm.quantity}
+                onChange={(e) => setStockForm({ ...stockForm, quantity: e.target.value })}
+              />
+            </div>
+            <PrimaryButton type="submit" disabled={submitting} style={{ marginTop: '16px' }}>
+              {submitting ? 'Adding…' : 'Add to inventory'}
+            </PrimaryButton>
+          </form>
+        </Card>
 
-      {items.length === 0 ? (
-        <EmptyState
-          icon={Package}
-          title="Empty inventory"
-          description="Add your first part using the form above."
-        />
-      ) : (
-        <TableWrap>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={thStyle}>Part</th>
-                <th style={thStyle}>Qty</th>
-                <th style={thStyle}>Unit price</th>
-                <th style={thStyle}>Threshold</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((i) => {
-                const low = i.quantity < (i.low_stock_threshold || 10);
-                return (
-                  <tr
-                    key={i.id}
-                    style={{
-                      borderBottom: '1px solid var(--border-subtle)',
-                      borderLeft: low ? '3px solid var(--danger)' : '3px solid transparent',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
-                  >
-                    <td style={tdStyle}>{i.name}</td>
-                    <td style={{ ...tdStyle }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{ color: low ? 'var(--danger)' : 'var(--text-primary)', fontWeight: low ? 600 : 400 }}>
-                          {i.quantity}
-                        </span>
-                        {low && (
-                          <span
-                            style={{
-                              padding: '2px 7px',
-                              borderRadius: '4px',
-                              fontSize: '10px',
-                              fontWeight: 600,
-                              color: 'var(--danger)',
-                              backgroundColor: 'var(--danger-subtle)',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.04em',
-                            }}
-                          >
-                            Low
+        {items.length === 0 ? (
+          <EmptyState
+            icon={Package}
+            title="Empty inventory"
+            description="Add your first part using the form above."
+          />
+        ) : (
+          <TableWrap>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th style={thStyle}>Part</th>
+                  <th style={thStyle}>Qty</th>
+                  <th style={thStyle}>Unit price</th>
+                  <th style={thStyle}>Threshold</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((i) => {
+                  const low = i.quantity < (i.low_stock_threshold || 10);
+                  return (
+                    <tr
+                      key={i.id}
+                      style={{
+                        borderBottom: '1px solid var(--border-subtle)',
+                        borderLeft: low ? '3px solid var(--danger)' : '3px solid transparent',
+                        transition: 'background-color 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                    >
+                      <td style={tdStyle}>{i.name}</td>
+                      <td style={{ ...tdStyle }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ color: low ? 'var(--danger)' : 'var(--text-primary)', fontWeight: low ? 600 : 400 }}>
+                            {i.quantity}
                           </span>
-                        )}
-                      </div>
-                      <div
-                        style={{
-                          marginTop: '6px',
-                          height: '3px',
-                          borderRadius: '2px',
-                          backgroundColor: 'var(--border)',
-                          width: '80px',
-                          overflow: 'hidden',
-                        }}
-                      >
+                          {low && (
+                            <span
+                              style={{
+                                padding: '2px 7px',
+                                borderRadius: '4px',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                color: 'var(--danger)',
+                                backgroundColor: 'var(--danger-subtle)',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.04em',
+                              }}
+                            >
+                              Low
+                            </span>
+                          )}
+                        </div>
                         <div
                           style={{
-                            height: '100%',
+                            marginTop: '6px',
+                            height: '3px',
                             borderRadius: '2px',
-                            width: `${Math.min(100, (i.quantity / Math.max(i.low_stock_threshold * 3, 1)) * 100)}%`,
-                            backgroundColor: low ? 'var(--danger)' : 'var(--accent)',
-                            transition: 'width 0.3s ease',
+                            backgroundColor: 'var(--border)',
+                            width: '80px',
+                            overflow: 'hidden',
                           }}
-                        />
-                      </div>
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
-                      ₹{Number(i.unit_price).toFixed(2)}
-                    </td>
-                    <td style={{ ...tdStyle, color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
-                      {i.low_stock_threshold}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </TableWrap>
-      )}
+                        >
+                          <div
+                            style={{
+                              height: '100%',
+                              borderRadius: '2px',
+                              width: `${Math.min(100, (i.quantity / Math.max(i.low_stock_threshold * 3, 1)) * 100)}%`,
+                              backgroundColor: low ? 'var(--danger)' : 'var(--accent)',
+                              transition: 'width 0.3s ease',
+                            }}
+                          />
+                        </div>
+                      </td>
+                      <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                        ₹{Number(i.unit_price).toFixed(2)}
+                      </td>
+                      <td style={{ ...tdStyle, color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                        {i.low_stock_threshold}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </TableWrap>
+        )}
+      </div>
     </AppLayout>
   );
 }

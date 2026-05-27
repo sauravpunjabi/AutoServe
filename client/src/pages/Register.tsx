@@ -46,7 +46,7 @@ const Register = () => {
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     e.currentTarget.style.borderColor = 'var(--accent)';
-    e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-glow)';
+    e.currentTarget.style.boxShadow = '0 0 0 2px rgba(249,115,22,0.1)';
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -55,7 +55,7 @@ const Register = () => {
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg)', animation: 'fadeInUp 0.25s ease forwards' }}>
       <AuthBrandPanel>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '8px', position: 'relative' }}>
           <p style={{ fontSize: '10px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 8px' }}>
@@ -102,23 +102,20 @@ const Register = () => {
                     {r.desc}
                   </p>
                 </div>
-                {active && <CheckCircle2 size={14} color="var(--accent)" style={{ flexShrink: 0 }} />}
+                {active && <CheckCircle2 size={16} color="var(--accent)" />}
               </button>
             );
           })}
         </div>
-        <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, position: 'relative' }}>
-          © {new Date().getFullYear()} AutoServe
-        </p>
       </AuthBrandPanel>
 
       <AuthFormPanel>
         <div style={{ marginBottom: '28px' }}>
           <h1 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
-            Create account
+            Create an account
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-            Join AutoServe and get started
+            Get started with AutoServe today
           </p>
         </div>
 
@@ -141,14 +138,15 @@ const Register = () => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: 500, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '5px' }}>
-              Full name
+              Full Name
             </label>
             <input
+              type="text"
               name="name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              placeholder="Your name"
+              placeholder="John Doe"
               style={inputBase}
               onFocus={handleFocus}
               onBlur={handleBlur}
@@ -201,27 +199,35 @@ const Register = () => {
               justifyContent: 'center',
               gap: '8px',
               marginTop: '4px',
-              backgroundColor: submitting ? 'var(--bg-elevated)' : 'var(--accent)',
-              color: submitting ? 'var(--text-muted)' : '#000',
+              backgroundColor: 'var(--accent)',
+              color: '#000',
               border: 'none',
               borderRadius: 'var(--radius)',
               fontSize: '13px',
               fontWeight: 600,
               cursor: submitting ? 'not-allowed' : 'pointer',
-              transition: 'all 0.15s ease',
-              opacity: submitting ? 0.6 : 1,
+              transition: 'filter 0.15s ease, transform 0.1s ease',
+              opacity: submitting ? 0.45 : 1,
               fontFamily: 'Geist, sans-serif',
             }}
             onMouseEnter={(e) => {
               if (!submitting) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent-hover)';
-                (e.currentTarget as HTMLElement).style.transform = 'scale(1.01)';
+                e.currentTarget.style.filter = 'brightness(1.1)';
               }
             }}
             onMouseLeave={(e) => {
               if (!submitting) {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent)';
-                (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+                e.currentTarget.style.filter = 'brightness(1)';
+              }
+            }}
+            onMouseDown={(e) => {
+              if (!submitting) {
+                e.currentTarget.style.transform = 'scale(0.97)';
+              }
+            }}
+            onMouseUp={(e) => {
+              if (!submitting) {
+                e.currentTarget.style.transform = 'scale(1)';
               }
             }}
           >

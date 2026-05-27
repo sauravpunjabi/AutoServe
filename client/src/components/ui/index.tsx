@@ -87,41 +87,4 @@ export function Modal({
   );
 }
 
-export function Skeleton({ width, height, className = '' }: { width?: string | number; height?: string | number; className?: string }) {
-  return (
-    <div
-      className={`skeleton ${className}`}
-      style={{ width, height: height ?? '16px' }}
-    />
-  );
-}
-
-export function SkeletonCard() {
-  return (
-    <div
-      style={{
-        backgroundColor: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '24px',
-      }}
-    >
-      <Skeleton height={12} width="40%" />
-      <div style={{ height: '12px' }} />
-      <Skeleton height={32} width="60%" />
-      <div style={{ height: '8px' }} />
-      <Skeleton height={12} width="30%" />
-    </div>
-  );
-}
-
-export function SkeletonRow() {
-  return (
-    <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-      <td style={{ padding: '12px 16px' }}><Skeleton height={14} width="80%" /></td>
-      <td style={{ padding: '12px 16px' }}><Skeleton height={14} width="60%" /></td>
-      <td style={{ padding: '12px 16px' }}><Skeleton height={14} width="70%" /></td>
-      <td style={{ padding: '12px 16px' }}><Skeleton height={20} width="70px" /></td>
-    </tr>
-  );
-}
+export * from './Skeleton';

@@ -12,6 +12,7 @@ export function Card({
   hoverable?: boolean;
   onClick?: () => void;
 }) {
+  const isInteractive = hoverable || onClick;
   return (
     <div
       onClick={onClick}
@@ -20,22 +21,32 @@ export function Card({
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)',
         padding: '16px',
-        transition: 'all 0.15s ease',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        transition: isInteractive 
+          ? 'border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease'
+          : 'border-color 0.2s ease',
         cursor: onClick ? 'pointer' : 'default',
+        transform: 'translateY(0)',
         ...style,
       }}
       onMouseEnter={(e) => {
-        if (hoverable || onClick) {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
-          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)';
-          (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)';
+        const el = e.currentTarget as HTMLElement;
+        if (isInteractive) {
+          el.style.borderColor = '#2a2a2a';
+          el.style.backgroundColor = '#141414';
+          el.style.transform = 'translateY(-1px)';
+        } else {
+          el.style.borderColor = '#2a2a2a';
         }
       }}
       onMouseLeave={(e) => {
-        if (hoverable || onClick) {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-card)';
-          (e.currentTarget as HTMLElement).style.transform = 'translateY(0)';
+        const el = e.currentTarget as HTMLElement;
+        if (isInteractive) {
+          el.style.borderColor = 'var(--border)';
+          el.style.backgroundColor = 'var(--bg-card)';
+          el.style.transform = 'translateY(0)';
+        } else {
+          el.style.borderColor = 'var(--border)';
         }
       }}
     >
@@ -80,78 +91,43 @@ export function Mono({ children, style }: { children: ReactNode; style?: CSSProp
 export function StatCard({
   label,
   value,
-  icon: Icon,
-  trend,
 }: {
   label: string;
   value: string | number;
-  icon?: React.ElementType;
-  trend?: { value: string; up?: boolean };
 }) {
   return (
     <div
       style={{
-        backgroundColor: 'var(--bg-card)',
+        background: 'var(--bg-card)',
         border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        padding: '16px 20px',
-        minWidth: '140px',
-        transition: 'all 0.15s ease',
-        position: 'relative',
+        borderRadius: '10px',
+        padding: '20px',
+        transition: 'border-color 0.2s ease',
+        cursor: 'default',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
-        (e.currentTarget as HTMLElement).style.borderLeftColor = 'var(--accent)';
-        (e.currentTarget as HTMLElement).style.borderLeftWidth = '2px';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-        (e.currentTarget as HTMLElement).style.borderLeftWidth = '1px';
-      }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = '#2a2a2a'}
+      onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <p
-          style={{
-            fontSize: '10px',
-            fontWeight: 500,
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            margin: 0,
-          }}
-        >
-          {label}
-        </p>
-        {Icon && <Icon size={14} color="var(--text-muted)" />}
-      </div>
-      <p
-        style={{
-          fontSize: '28px',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          margin: 0,
-          fontFamily: 'Geist Mono, monospace',
-          letterSpacing: '-0.02em',
-        }}
-      >
+      <p style={{
+        fontSize: '10px', fontWeight: 500,
+        color: 'var(--text-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+        margin: 0
+      }}>
+        {label}
+      </p>
+      <p style={{
+        fontSize: '32px', fontWeight: 700,
+        fontFamily: 'Geist Mono, monospace',
+        color: 'var(--text-primary)',
+        margin: '8px 0 0',
+        letterSpacing: '-0.02em',
+        lineHeight: 1
+      }}>
         {value}
       </p>
-      {trend && (
-        <span
-          style={{
-            display: 'inline-block',
-            marginTop: '6px',
-            fontSize: '11px',
-            fontWeight: 500,
-            color: trend.up ? 'var(--success)' : 'var(--danger)',
-            backgroundColor: trend.up ? 'var(--success-subtle)' : 'var(--danger-subtle)',
-            padding: '1px 6px',
-            borderRadius: '3px',
-          }}
-        >
-          {trend.up ? '↑' : '↓'} {trend.value}
-        </span>
-      )}
     </div>
   );
 }
@@ -173,38 +149,32 @@ export function PrimaryButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
-        padding: '6px 14px',
-        backgroundColor: isDisabled ? 'var(--bg-elevated)' : 'var(--accent)',
-        color: isDisabled ? 'var(--text-muted)' : '#000',
-        border: 'none',
-        borderRadius: 'var(--radius)',
-        fontSize: '12px',
+        backgroundColor: 'var(--accent)',
+        color: '#000',
         fontWeight: 600,
+        fontSize: '12px',
+        padding: '7px 14px',
+        borderRadius: '6px',
+        border: 'none',
         cursor: isDisabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.15s ease',
-        opacity: isDisabled ? 0.4 : 1,
+        transition: 'filter 0.15s ease, transform 0.1s ease',
+        opacity: isDisabled ? 0.45 : 1,
         ...props.style,
       }}
       onMouseEnter={(e) => {
-        if (!isDisabled) {
-          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent-hover)';
-          (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
-        }
+        if (!isDisabled) e.currentTarget.style.filter = 'brightness(1.1)';
         props.onMouseEnter?.(e);
       }}
       onMouseLeave={(e) => {
-        if (!isDisabled) {
-          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--accent)';
-          (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-        }
+        if (!isDisabled) e.currentTarget.style.filter = 'brightness(1)';
         props.onMouseLeave?.(e);
       }}
       onMouseDown={(e) => {
-        if (!isDisabled) (e.currentTarget as HTMLElement).style.transform = 'scale(0.98)';
+        if (!isDisabled) e.currentTarget.style.transform = 'scale(0.97)';
         props.onMouseDown?.(e);
       }}
       onMouseUp={(e) => {
-        if (!isDisabled) (e.currentTarget as HTMLElement).style.transform = 'scale(1.02)';
+        if (!isDisabled) e.currentTarget.style.transform = 'scale(1)';
         props.onMouseUp?.(e);
       }}
     >
@@ -241,39 +211,31 @@ export function SecondaryButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
-        padding: '6px 14px',
         backgroundColor: 'transparent',
         color: 'var(--text-secondary)',
         border: '1px solid var(--border-strong)',
-        borderRadius: 'var(--radius)',
         fontSize: '12px',
         fontWeight: 500,
+        padding: '7px 14px',
+        borderRadius: '6px',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.15s ease',
-        opacity: disabled ? 0.4 : 1,
+        transition: 'border-color 0.15s ease, color 0.15s ease',
+        opacity: disabled ? 0.45 : 1,
         ...props.style,
       }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
-          (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+          e.currentTarget.style.borderColor = '#3a3a3a';
+          e.currentTarget.style.color = '#fafafa';
         }
         props.onMouseEnter?.(e);
       }}
       onMouseLeave={(e) => {
         if (!disabled) {
-          (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)';
-          (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+          e.currentTarget.style.borderColor = 'var(--border-strong)';
+          e.currentTarget.style.color = 'var(--text-secondary)';
         }
         props.onMouseLeave?.(e);
-      }}
-      onMouseDown={(e) => {
-        if (!disabled) (e.currentTarget as HTMLElement).style.transform = 'scale(0.98)';
-        props.onMouseDown?.(e);
-      }}
-      onMouseUp={(e) => {
-        if (!disabled) (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
-        props.onMouseUp?.(e);
       }}
     >
       {children}
@@ -296,24 +258,23 @@ export function DangerButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
-        padding: '6px 14px',
         backgroundColor: 'transparent',
         color: 'var(--danger)',
         border: '1px solid rgba(239,68,68,0.2)',
-        borderRadius: 'var(--radius)',
         fontSize: '12px',
-        fontWeight: 500,
+        padding: '7px 14px',
+        borderRadius: '6px',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.15s ease',
-        opacity: disabled ? 0.4 : 1,
+        transition: 'background 0.15s ease',
+        opacity: disabled ? 0.45 : 1,
         ...props.style,
       }}
       onMouseEnter={(e) => {
-        if (!disabled) (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--danger-subtle)';
+        if (!disabled) e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.08)';
         props.onMouseEnter?.(e);
       }}
       onMouseLeave={(e) => {
-        if (!disabled) (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+        if (!disabled) e.currentTarget.style.backgroundColor = 'transparent';
         props.onMouseLeave?.(e);
       }}
     >
@@ -337,29 +298,29 @@ export function GhostButton({
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
-        padding: '6px 10px',
         backgroundColor: 'transparent',
-        color: 'var(--text-muted)',
+        color: 'var(--text-secondary)',
         border: 'none',
         borderRadius: 'var(--radius)',
         fontSize: '12px',
         fontWeight: 500,
+        padding: '6px 10px',
         cursor: disabled ? 'not-allowed' : 'pointer',
-        transition: 'all 0.15s ease',
-        opacity: disabled ? 0.4 : 1,
+        transition: 'background 0.15s ease, color 0.15s ease',
+        opacity: disabled ? 0.45 : 1,
         ...props.style,
       }}
       onMouseEnter={(e) => {
         if (!disabled) {
-          (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)';
+          e.currentTarget.style.color = '#fafafa';
+          e.currentTarget.style.backgroundColor = '#1a1a1a';
         }
         props.onMouseEnter?.(e);
       }}
       onMouseLeave={(e) => {
         if (!disabled) {
-          (e.currentTarget as HTMLElement).style.color = 'var(--text-muted)';
-          (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = 'var(--text-secondary)';
+          e.currentTarget.style.backgroundColor = 'transparent';
         }
         props.onMouseLeave?.(e);
       }}
@@ -381,7 +342,7 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement> & { error
             fontWeight: 500,
             color: 'var(--text-muted)',
             textTransform: 'uppercase',
-            letterSpacing: '0.06em',
+            letterSpacing: '0.08em',
             marginBottom: '5px',
           }}
         >
@@ -391,31 +352,32 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement> & { error
       <input
         {...inputProps}
         style={{
-          width: '100%',
-          padding: '7px 10px',
-          backgroundColor: 'var(--bg)',
+          background: 'var(--bg)',
           border: `1px solid ${error ? 'var(--danger)' : 'var(--border-strong)'}`,
-          borderRadius: 'var(--radius)',
+          borderRadius: '6px',
+          padding: '7px 10px',
           fontSize: '13px',
+          fontFamily: 'Geist, sans-serif',
           color: 'var(--text-primary)',
+          width: '100%',
           outline: 'none',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-          fontFamily: 'Geist, sans-serif',
           boxShadow: error ? '0 0 0 2px rgba(239,68,68,0.12)' : 'none',
           ...inputProps.style,
         }}
         onFocus={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = error ? 'var(--danger)' : 'var(--accent)';
-          (e.currentTarget as HTMLElement).style.boxShadow = error
+          e.currentTarget.style.borderColor = error ? 'var(--danger)' : 'var(--accent)';
+          e.currentTarget.style.boxShadow = error
             ? '0 0 0 2px rgba(239,68,68,0.15)'
-            : '0 0 0 2px var(--accent-glow)';
+            : '0 0 0 2px rgba(249,115,22,0.1)';
           inputProps.onFocus?.(e);
         }}
         onBlur={(e) => {
-          (e.currentTarget as HTMLElement).style.borderColor = error ? 'var(--danger)' : 'var(--border-strong)';
-          (e.currentTarget as HTMLElement).style.boxShadow = error ? '0 0 0 2px rgba(239,68,68,0.12)' : 'none';
+          e.currentTarget.style.borderColor = error ? 'var(--danger)' : 'var(--border-strong)';
+          e.currentTarget.style.boxShadow = 'none';
           inputProps.onBlur?.(e);
         }}
+        placeholder={inputProps.placeholder}
       />
       {error && (
         <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--danger)' }}>{error}</p>
@@ -429,27 +391,27 @@ export function TextSelect(props: SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       style={{
-        width: '100%',
-        padding: '7px 10px',
-        backgroundColor: 'var(--bg)',
+        background: 'var(--bg)',
         border: '1px solid var(--border-strong)',
-        borderRadius: 'var(--radius)',
+        borderRadius: '6px',
+        padding: '7px 10px',
         fontSize: '13px',
+        fontFamily: 'Geist, sans-serif',
         color: 'var(--text-primary)',
+        width: '100%',
         outline: 'none',
         transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
         cursor: 'pointer',
-        fontFamily: 'Geist, sans-serif',
         ...props.style,
       }}
       onFocus={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 2px var(--accent-glow)';
+        e.currentTarget.style.borderColor = 'var(--accent)';
+        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(249,115,22,0.1)';
         props.onFocus?.(e);
       }}
       onBlur={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-strong)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+        e.currentTarget.style.borderColor = 'var(--border-strong)';
+        e.currentTarget.style.boxShadow = 'none';
         props.onBlur?.(e);
       }}
     />
@@ -479,10 +441,11 @@ export function TableWrap({ children }: { children: ReactNode }) {
   return (
     <div
       style={{
-        backgroundColor: 'var(--bg-card)',
+        background: 'var(--bg-card)',
         border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
+        borderRadius: '10px',
         overflow: 'hidden',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
       }}
     >
       {children}
@@ -497,14 +460,16 @@ export const thStyle: CSSProperties = {
   fontWeight: 500,
   color: 'var(--text-muted)',
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.08em',
   backgroundColor: 'var(--bg-elevated)',
+  borderBottom: '1px solid var(--border)',
 };
 
 export const tdStyle: CSSProperties = {
-  padding: '11px 16px',
+  padding: '13px 16px',
   color: 'var(--text-primary)',
   fontSize: '12px',
+  verticalAlign: 'middle',
 };
 
 export function TableRow({
@@ -516,17 +481,17 @@ export function TableRow({
 }) {
   return (
     <tr
-      style={{
-        borderBottom: '1px solid var(--border)',
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'background-color 0.15s ease',
-      }}
       onClick={onClick}
+      style={{
+        borderBottom: '1px solid #111111',
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'background 0.1s ease',
+      }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)';
+        e.currentTarget.style.backgroundColor = onClick ? '#141414' : '#0d0d0d';
       }}
       onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+        e.currentTarget.style.backgroundColor = 'transparent';
       }}
     >
       {children}
@@ -610,6 +575,223 @@ export function GridStats({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+    </div>
+  );
+}
+
+export function KpiStrip({
+  children,
+  cols,
+  style,
+}: {
+  children: ReactNode;
+  cols?: number;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      className="kpi-strip"
+      style={{
+        display: 'grid',
+        gridTemplateColumns: cols ? `repeat(${cols}, 1fr)` : 'repeat(auto-fit, minmax(140px, 1fr))',
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        overflow: 'hidden',
+        marginBottom: '20px',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function KpiCell({
+  label,
+  value,
+  sub,
+  accent,
+  mono,
+  trend,
+}: {
+  label: string;
+  value: ReactNode;
+  sub?: string;
+  accent?: string;
+  mono?: boolean;
+  trend?: string;
+}) {
+  const trendPositive = trend && !trend.startsWith('-');
+  return (
+    <div
+      className="kpi-cell"
+      style={{
+        padding: '16px 20px',
+        borderRight: '1px solid var(--border)',
+        minWidth: 0,
+      }}
+    >
+      <p
+        style={{
+          margin: '0 0 8px',
+          fontSize: '11px',
+          color: 'var(--text-secondary)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {label}
+      </p>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: '26px',
+            lineHeight: 1,
+            fontWeight: 500,
+            fontFamily: mono ? 'Geist Mono, monospace' : 'Geist, sans-serif',
+            color: accent || 'var(--text-primary)',
+            letterSpacing: '-0.02em',
+          }}
+        >
+          {value}
+        </p>
+        {trend && (
+          <span
+            style={{
+              fontSize: '11px',
+              fontFamily: 'Geist Mono, monospace',
+              color: trendPositive ? 'var(--success)' : 'var(--danger)',
+            }}
+          >
+            {trend}
+          </span>
+        )}
+      </div>
+      {sub && (
+        <p
+          style={{
+            margin: '6px 0 0',
+            fontSize: '11px',
+            color: 'var(--text-muted)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {sub}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function Panel({
+  title,
+  subtitle,
+  action,
+  children,
+  noPad,
+  style,
+}: {
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  action?: ReactNode;
+  children: ReactNode;
+  noPad?: boolean;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        background: 'var(--bg-card)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        overflow: 'hidden',
+        ...style,
+      }}
+    >
+      {(title || action) && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '16px',
+            padding: '12px 20px',
+            borderBottom: '1px solid var(--border)',
+            minHeight: '48px',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            {title && (
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {title}
+              </p>
+            )}
+            {subtitle && (
+              <p
+                style={{
+                  margin: '2px 0 0',
+                  fontSize: '11px',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                {subtitle}
+              </p>
+            )}
+          </div>
+          {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+        </div>
+      )}
+      <div style={noPad ? {} : { padding: '16px 20px' }}>{children}</div>
+    </div>
+  );
+}
+
+export function CapacityBar({
+  value,
+  max = 100,
+  color,
+}: {
+  value: number;
+  max?: number;
+  color?: string;
+}) {
+  const pct = Math.min(100, Math.max(0, (value / max) * 100));
+  const c = color || (pct > 90 ? 'var(--danger)' : pct > 70 ? 'var(--warning)' : 'var(--success)');
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '4px',
+        background: 'var(--bg-elevated)',
+        borderRadius: '2px',
+        overflow: 'hidden',
+        border: '1px solid var(--border)',
+      }}
+    >
+      <div
+        style={{
+          height: '100%',
+          width: pct + '%',
+          backgroundColor: c,
+          transition: 'width 0.5s ease',
+          borderRadius: '2px',
+        }}
+      />
     </div>
   );
 }

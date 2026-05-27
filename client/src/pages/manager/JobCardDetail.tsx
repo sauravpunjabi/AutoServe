@@ -4,8 +4,6 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { managerNav } from '../../lib/nav';
-import LoadingPage from '../../components/ui/LoadingPage';
-import StatusBadge from '../../components/ui/StatusBadge';
 import { useManagerCenter } from '../../hooks/useManagerCenter';
 import { ArrowLeft } from 'lucide-react';
 import {
@@ -16,7 +14,10 @@ import {
   PrimaryButton,
   SecondaryButton,
   Mono,
-} from '../../components/ui/primitives';
+  StatusBadge,
+  Skeleton,
+  SkeletonText,
+} from '../../components/ui';
 
 export default function ManagerJobCardDetail() {
   const { id } = useParams();
@@ -146,7 +147,20 @@ export default function ManagerJobCardDetail() {
   if (loading) {
     return (
       <AppLayout title="Job card" subtitle="Job details." navLinks={managerNav}>
-        <LoadingPage />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <Card>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Skeleton width="100px" height="14px" />
+              <SkeletonText lines={4} />
+            </div>
+          </Card>
+          <Card>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Skeleton width="120px" height="14px" />
+              <SkeletonText lines={3} />
+            </div>
+          </Card>
+        </div>
       </AppLayout>
     );
   }
@@ -170,165 +184,167 @@ export default function ManagerJobCardDetail() {
 
   return (
     <AppLayout title="Job card" subtitle={`#${id?.slice(0, 8)}`} navLinks={managerNav}>
-      <Link
-        to="/manager/job-cards"
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          marginBottom: '24px',
-          fontSize: '13px',
-          color: 'var(--text-secondary)',
-          textDecoration: 'none',
-        }}
-      >
-        <ArrowLeft size={16} />
-        Back to job cards
-      </Link>
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        <Link
+          to="/manager/job-cards"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginBottom: '24px',
+            fontSize: '13px',
+            color: 'var(--text-secondary)',
+            textDecoration: 'none',
+          }}
+        >
+          <ArrowLeft size={16} />
+          Back to job cards
+        </Link>
 
-      <Card style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
-          <div>
-            <SectionLabel>Booking ref</SectionLabel>
-            <Mono>{job.booking_id?.slice(0, 8)}</Mono>
-            <p style={{ margin: '12px 0 0', fontSize: '13px', color: 'var(--text-primary)' }}>
-              {job.year} {job.make} {job.model} · {job.license_plate}
-            </p>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-              {job.customer_name}
-            </p>
-            {Array.isArray(job.services) && job.services.length > 0 && (
-              <div style={{ marginTop: '12px' }}>
-                {job.services.map((s: any) => (
-                  <div
-                    key={s.id}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: '12px',
-                      padding: '3px 0',
-                      color: 'var(--text-secondary)',
-                    }}
-                  >
-                    <span>{s.name}</span>
-                    <span style={{ fontFamily: 'DM Mono, monospace' }}>
-                      ₹{Number(s.price).toLocaleString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        <Card style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+            <div>
+              <SectionLabel>Booking ref</SectionLabel>
+              <Mono>{job.booking_id?.slice(0, 8)}</Mono>
+              <p style={{ margin: '12px 0 0', fontSize: '13px', color: 'var(--text-primary)' }}>
+                {job.year} {job.make} {job.model} · {job.license_plate}
+              </p>
+              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                {job.customer_name}
+              </p>
+              {Array.isArray(job.services) && job.services.length > 0 && (
+                <div style={{ marginTop: '12px' }}>
+                  {job.services.map((s: any) => (
+                    <div
+                      key={s.id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '12px',
+                        padding: '3px 0',
+                        color: 'var(--text-secondary)',
+                      }}
+                    >
+                      <span>{s.name}</span>
+                      <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                        ₹{Number(s.price).toLocaleString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <StatusBadge status={job.status} />
+          </div>
+          <div style={{ marginTop: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+            <TextSelect
+              value={job.mechanic_id || ''}
+              disabled={submittingMechanic}
+              onChange={(e) => e.target.value && assignMechanic(e.target.value)}
+              style={{ width: 'auto', minWidth: '180px' }}
+            >
+              <option value="">Assign mechanic</option>
+              {mechanics.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </TextSelect>
+            <TextSelect
+              value={job.status}
+              disabled={submittingStatus}
+              onChange={(e) => updateJobStatus(e.target.value)}
+              style={{ width: 'auto', minWidth: '160px' }}
+            >
+              <option value="open">Open</option>
+              <option value="in_progress">In progress</option>
+              <option value="completed">Completed</option>
+            </TextSelect>
+            {(submittingMechanic || submittingStatus) && (
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)', alignSelf: 'center' }}>
+                Updating…
+              </span>
             )}
           </div>
-          <StatusBadge status={job.status} />
-        </div>
-        <div style={{ marginTop: '24px', display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-          <TextSelect
-            value={job.mechanic_id || ''}
-            disabled={submittingMechanic}
-            onChange={(e) => e.target.value && assignMechanic(e.target.value)}
-            style={{ width: 'auto', minWidth: '180px' }}
-          >
-            <option value="">Assign mechanic</option>
-            {mechanics.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
+        </Card>
+
+        <Card style={{ marginBottom: '24px' }}>
+          <SectionLabel>Tasks</SectionLabel>
+          <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0 }}>
+            {(job.tasks || []).map((t: any) => (
+              <li key={t.id} style={rowDivider}>
+                <span style={{ color: 'var(--text-primary)' }}>{t.description}</span>
+                <StatusBadge status={t.status} />
+              </li>
             ))}
-          </TextSelect>
-          <TextSelect
-            value={job.status}
-            disabled={submittingStatus}
-            onChange={(e) => updateJobStatus(e.target.value)}
-            style={{ width: 'auto', minWidth: '160px' }}
-          >
-            <option value="open">Open</option>
-            <option value="in_progress">In progress</option>
-            <option value="completed">Completed</option>
-          </TextSelect>
-          {(submittingMechanic || submittingStatus) && (
-            <span style={{ fontSize: '13px', color: 'var(--text-muted)', alignSelf: 'center' }}>
-              Updating…
-            </span>
-          )}
-        </div>
-      </Card>
+          </ul>
+          <form onSubmit={addTask} style={{ display: 'flex', gap: '8px' }}>
+            <TextInput
+              value={taskDesc}
+              onChange={(e) => setTaskDesc(e.target.value)}
+              placeholder="New task description"
+              style={{ flex: 1 }}
+            />
+            <PrimaryButton type="submit" disabled={submittingTask}>
+              {submittingTask ? 'Adding…' : 'Add'}
+            </PrimaryButton>
+          </form>
+        </Card>
 
-      <Card style={{ marginBottom: '24px' }}>
-        <SectionLabel>Tasks</SectionLabel>
-        <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0 }}>
-          {(job.tasks || []).map((t: any) => (
-            <li key={t.id} style={rowDivider}>
-              <span style={{ color: 'var(--text-primary)' }}>{t.description}</span>
-              <StatusBadge status={t.status} />
-            </li>
-          ))}
-        </ul>
-        <form onSubmit={addTask} style={{ display: 'flex', gap: '8px' }}>
-          <TextInput
-            value={taskDesc}
-            onChange={(e) => setTaskDesc(e.target.value)}
-            placeholder="New task description"
-            style={{ flex: 1 }}
-          />
-          <PrimaryButton type="submit" disabled={submittingTask}>
-            {submittingTask ? 'Adding…' : 'Add'}
-          </PrimaryButton>
-        </form>
-      </Card>
-
-      <Card style={{ marginBottom: '24px' }}>
-        <SectionLabel>Parts used</SectionLabel>
-        <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0 }}>
-          {(job.parts || []).map((p: any) => (
-            <li key={p.id} style={rowDivider}>
-              <span style={{ color: 'var(--text-primary)' }}>{p.part_name}</span>
-              <span style={{ color: 'var(--text-muted)' }}>Qty {p.quantity_used}</span>
-            </li>
-          ))}
-        </ul>
-        <form onSubmit={addPart} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          <TextSelect
-            value={partId}
-            onChange={(e) => setPartId(e.target.value)}
-            style={{ flex: '1 1 200px' }}
-          >
-            <option value="">Select part</option>
-            {inventory.map((i) => (
-              <option key={i.part_id} value={i.part_id}>
-                {i.name} (stock: {i.quantity})
-              </option>
+        <Card style={{ marginBottom: '24px' }}>
+          <SectionLabel>Parts used</SectionLabel>
+          <ul style={{ listStyle: 'none', margin: '0 0 16px', padding: 0 }}>
+            {(job.parts || []).map((p: any) => (
+              <li key={p.id} style={rowDivider}>
+                <span style={{ color: 'var(--text-primary)' }}>{p.part_name}</span>
+                <span style={{ color: 'var(--text-muted)' }}>Qty {p.quantity_used}</span>
+              </li>
             ))}
-          </TextSelect>
-          <TextInput
-            type="number"
-            min={1}
-            value={partQty}
-            onChange={(e) => setPartQty(Number(e.target.value))}
-            style={{ width: '80px' }}
-          />
-          <SecondaryButton type="submit" disabled={submittingPart}>
-            {submittingPart ? 'Adding…' : 'Add part'}
-          </SecondaryButton>
-        </form>
-      </Card>
-
-      {job.status === 'completed' && (
-        <Card>
-          <SectionLabel>Generate invoice</SectionLabel>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          </ul>
+          <form onSubmit={addPart} style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <TextSelect
+              value={partId}
+              onChange={(e) => setPartId(e.target.value)}
+              style={{ flex: '1 1 200px' }}
+            >
+              <option value="">Select part</option>
+              {inventory.map((i) => (
+                <option key={i.part_id} value={i.part_id}>
+                  {i.name} (stock: {i.quantity})
+                </option>
+              ))}
+            </TextSelect>
             <TextInput
               type="number"
-              placeholder="Labor cost"
-              value={laborCost}
-              onChange={(e) => setLaborCost(e.target.value)}
-              style={{ width: '160px' }}
+              min={1}
+              value={partQty}
+              onChange={(e) => setPartQty(Number(e.target.value))}
+              style={{ width: '80px' }}
             />
-            <PrimaryButton type="button" onClick={generateInvoice} disabled={submittingInvoice}>
-              {submittingInvoice ? 'Generating…' : 'Generate invoice'}
-            </PrimaryButton>
-          </div>
+            <SecondaryButton type="submit" disabled={submittingPart}>
+              {submittingPart ? 'Adding…' : 'Add part'}
+            </SecondaryButton>
+          </form>
         </Card>
-      )}
+
+        {job.status === 'completed' && (
+          <Card>
+            <SectionLabel>Generate invoice</SectionLabel>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <TextInput
+                type="number"
+                placeholder="Labor cost"
+                value={laborCost}
+                onChange={(e) => setLaborCost(e.target.value)}
+                style={{ width: '160px' }}
+              />
+              <PrimaryButton type="button" onClick={generateInvoice} disabled={submittingInvoice}>
+                {submittingInvoice ? 'Generating…' : 'Generate invoice'}
+              </PrimaryButton>
+            </div>
+          </Card>
+        )}
+      </div>
     </AppLayout>
   );
 }

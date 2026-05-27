@@ -5,10 +5,7 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { customerNav } from '../../lib/nav';
-import { Card, SecondaryButton, PrimaryButton, Mono, TextInput } from '../../components/ui/primitives';
-import LoadingPage from '../../components/ui/LoadingPage';
-import EmptyState from '../../components/ui/EmptyState';
-import StatusBadge from '../../components/ui/StatusBadge';
+import { Card, SecondaryButton, PrimaryButton, Mono, TextInput, EmptyState, StatusBadge, Skeleton } from '../../components/ui';
 import { FileText, Download } from 'lucide-react';
 
 function downloadInvoicePDF(inv: any) {
@@ -387,7 +384,47 @@ export default function CustomerInvoices() {
         subtitle="View and download your service receipts."
         navLinks={customerNav}
       >
-        <LoadingPage />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '16px',
+          }}
+        >
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  paddingBottom: '16px',
+                  marginBottom: '4px',
+                  borderBottom: '1px solid var(--border-subtle)',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <Skeleton width="60px" height="12px" />
+                  <Skeleton width="100px" height="10px" />
+                </div>
+                <Skeleton width="50px" height="18px" borderRadius="4px" />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Skeleton width="80px" height="10px" />
+                  <Skeleton width="50px" height="10px" />
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Skeleton width="80px" height="10px" />
+                  <Skeleton width="60px" height="10px" />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+                <Skeleton width="100%" height="32px" borderRadius="6px" />
+              </div>
+            </Card>
+          ))}
+        </div>
       </AppLayout>
     );
   }
@@ -398,94 +435,96 @@ export default function CustomerInvoices() {
       subtitle="View and download your service receipts."
       navLinks={customerNav}
     >
-      {invoices.length === 0 ? (
-        <EmptyState
-          icon={FileText}
-          title="No invoices yet"
-          description="When your services are completed, invoices will appear here."
-        />
-      ) : (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {invoices.map((inv) => (
-            <Card key={inv.id} style={{ display: 'flex', flexDirection: 'column' }}>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'flex-start',
-                  paddingBottom: '16px',
-                  marginBottom: '16px',
-                  borderBottom: '1px solid var(--border-subtle)',
-                }}
-              >
-                <div>
-                  <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                    Invoice
-                  </p>
-                  <Mono style={{ display: 'block', marginTop: '4px' }}>
-                    #{inv.id.split('-')[0].toUpperCase()}
-                  </Mono>
-                </div>
-                <StatusBadge status={inv.status} />
-              </div>
-
-              <div style={{ flex: 1, marginBottom: '16px' }}>
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        {invoices.length === 0 ? (
+          <EmptyState
+            icon={FileText}
+            title="No invoices yet"
+            description="When your services are completed, invoices will appear here."
+          />
+        ) : (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+              gap: '16px',
+            }}
+          >
+            {invoices.map((inv) => (
+              <Card key={inv.id} style={{ display: 'flex', flexDirection: 'column' }}>
                 <div
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    fontSize: '13px',
-                    marginBottom: '8px',
+                    alignItems: 'flex-start',
+                    paddingBottom: '16px',
+                    marginBottom: '16px',
+                    borderBottom: '1px solid var(--border-subtle)',
                   }}
                 >
-                  <span style={{ color: 'var(--text-secondary)' }}>Date issued</span>
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                    {new Date(inv.issued_at).toLocaleDateString()}
-                  </span>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      Invoice
+                    </p>
+                    <Mono style={{ display: 'block', marginTop: '4px' }}>
+                      #{inv.id.split('-')[0].toUpperCase()}
+                    </Mono>
+                  </div>
+                  <StatusBadge status={inv.status} />
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Total amount</span>
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'DM Mono, monospace' }}>
-                    ${Number(inv.total_amount).toFixed(2)}
-                  </span>
-                </div>
-              </div>
 
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {inv.status === 'unpaid' && (
-                  <PrimaryButton
-                    type="button"
-                    onClick={() => setPayingInvoice(inv)}
-                    style={{ flex: 1 }}
+                <div style={{ flex: 1, marginBottom: '16px' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      marginBottom: '8px',
+                    }}
                   >
-                    Pay Now
-                  </PrimaryButton>
-                )}
-                <SecondaryButton
-                  type="button"
-                  onClick={() => downloadInvoicePDF(inv)}
-                  style={{
-                    flex: inv.status === 'unpaid' ? '0 0 auto' : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                  }}
-                >
-                  <Download size={14} />
-                  {inv.status === 'unpaid' ? null : 'Download PDF'}
-                </SecondaryButton>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+                    <span style={{ color: 'var(--text-secondary)' }}>Date issued</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                      {new Date(inv.issued_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Total amount</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'DM Mono, monospace' }}>
+                      ${Number(inv.total_amount).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {inv.status === 'unpaid' && (
+                    <PrimaryButton
+                      type="button"
+                      onClick={() => setPayingInvoice(inv)}
+                      style={{ flex: 1 }}
+                    >
+                      Pay Now
+                    </PrimaryButton>
+                  )}
+                  <SecondaryButton
+                    type="button"
+                    onClick={() => downloadInvoicePDF(inv)}
+                    style={{
+                      flex: inv.status === 'unpaid' ? '0 0 auto' : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    <Download size={14} />
+                    {inv.status === 'unpaid' ? null : 'Download PDF'}
+                  </SecondaryButton>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
 
       {payingInvoice && (
         <PaymentModal

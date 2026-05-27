@@ -4,12 +4,6 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { managerNav } from '../../lib/nav';
-import LoadingPage from '../../components/ui/LoadingPage';
-import EmptyState from '../../components/ui/EmptyState';
-import StatusBadge from '../../components/ui/StatusBadge';
-import { Calendar } from 'lucide-react';
-import ServiceTags from '../../components/ui/ServiceTags';
-import { useManagerCenter } from '../../hooks/useManagerCenter';
 import {
   TableWrap,
   thStyle,
@@ -17,7 +11,12 @@ import {
   TableRow,
   SuccessTextButton,
   DangerTextButton,
-} from '../../components/ui/primitives';
+  EmptyState,
+  StatusBadge,
+  SkeletonTable,
+} from '../../components/ui';
+import { Calendar } from 'lucide-react';
+import { useManagerCenter } from '../../hooks/useManagerCenter';
 
 export default function ManagerBookings() {
   const { centerId, loading: centerLoading } = useManagerCenter();
@@ -107,79 +106,89 @@ export default function ManagerBookings() {
   if (loading || centerLoading) {
     return (
       <AppLayout title="Schedule" subtitle="Manage incoming service requests." navLinks={managerNav}>
-        <LoadingPage />
+        <SkeletonTable rows={6} />
       </AppLayout>
     );
   }
 
   return (
     <AppLayout title="Schedule" subtitle="Manage incoming service requests." navLinks={managerNav}>
-      {bookings.length === 0 ? (
-        <EmptyState
-          icon={Calendar}
-          title="No bookings"
-          description="Bookings from customers will appear here."
-        />
-      ) : (
-        <TableWrap>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                <th style={thStyle}>Date</th>
-                <th style={thStyle}>Time</th>
-                <th style={thStyle}>Vehicle</th>
-                <th style={thStyle}>Service</th>
-                <th style={thStyle}>Status</th>
-                <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map((b) => (
-                <TableRow key={b.id}>
-                  <td style={tdStyle}>
-                    <Link
-                      to={`/manager/bookings/${b.id}`}
-                      style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
-                    >
-                      {new Date(b.booking_date).toLocaleDateString()}
-                    </Link>
-                  </td>
-                  <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
-                    {b.time_slot?.slice?.(0, 5) || b.time_slot}
-                  </td>
-                  <td style={{ ...tdStyle, fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
-                    {b.make} {b.model}
-                  </td>
-                  <td style={tdStyle}>
-                    <ServiceTags services={b.services} serviceType={b.service_type} />
-                  </td>
-                  <td style={tdStyle}>
-                    <StatusBadge status={b.status} />
-                  </td>
-                  <td style={{ ...tdStyle, textAlign: 'right' }}>
-                    {b.status === 'pending' && (
-                      <>
-                        <SuccessTextButton
-                          onClick={() => handleApproveClick(b.id)}
-                          disabled={updatingId === b.id}
-                        >
-                          Approve
-                        </SuccessTextButton>
-                        <DangerTextButton
-                          onClick={() => updateStatus(b.id, 'rejected')}
-                          disabled={updatingId === b.id}
-                        >
-                          Reject
-                        </DangerTextButton>
-                      </>
-                    )}
-                  </td>
-                </TableRow>
-              ))}
-            </tbody>
-          </table>
-        </TableWrap>
-      )}
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        {bookings.length === 0 ? (
+          <EmptyState
+            icon={Calendar}
+            title="No bookings"
+            description="Bookings from customers will appear here."
+          />
+        ) : (
+          <TableWrap>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                  <th style={thStyle}>Date</th>
+                  <th style={thStyle}>Time</th>
+                  <th style={thStyle}>Vehicle</th>
+                  <th style={thStyle}>Service</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bookings.map((b) => (
+                  <TableRow key={b.id}>
+                    <td style={tdStyle}>
+                      <Link
+                        to={`/manager/bookings/${b.id}`}
+                        style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
+                      >
+                        {new Date(b.booking_date).toLocaleDateString()}
+                      </Link>
+                    </td>
+                    <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
+                      {b.time_slot?.slice?.(0, 5) || b.time_slot}
+                    </td>
+                    <td style={{ ...tdStyle, fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                      {b.make} {b.model}
+                    </td>
+                    <td style={tdStyle}>
+                      <span style={{ fontSize: '12px', color: '#fafafa' }}>
+                        {b.services?.[0]?.name || b.service_type || 'N/A'}
+                      </span>
+                      {(b.services?.length || 0) > 1 && (
+                        <span style={{ 
+                          marginLeft: '6px', fontSize: '10px',
+                          color: '#f97316', fontWeight: 500 
+                        }}>+{b.services.length - 1} more</span>
+                      )}
+                    </td>
+                    <td style={tdStyle}>
+                      <StatusBadge status={b.status} />
+                    </td>
+                    <td style={{ ...tdStyle, textAlign: 'right' }}>
+                      {b.status === 'pending' && (
+                        <>
+                          <SuccessTextButton
+                            onClick={() => handleApproveClick(b.id)}
+                            disabled={updatingId === b.id}
+                          >
+                            Approve
+                          </SuccessTextButton>
+                          <DangerTextButton
+                            onClick={() => updateStatus(b.id, 'rejected')}
+                            disabled={updatingId === b.id}
+                          >
+                            Reject
+                          </DangerTextButton>
+                        </>
+                      )}
+                    </td>
+                  </TableRow>
+                ))}
+              </tbody>
+            </table>
+          </TableWrap>
+        )}
+      </div>
 
       {selectedBookingId && (
         <div

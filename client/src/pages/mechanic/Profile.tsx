@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { mechanicNav } from '../../lib/nav';
-import LoadingPage from '../../components/ui/LoadingPage';
-import { Card, SectionLabel, TextLink } from '../../components/ui/primitives';
-import StatusBadge from '../../components/ui/StatusBadge';
+import { Card, SectionLabel, TextLink, StatusBadge, Skeleton, SkeletonText } from '../../components/ui';
 import { toast } from 'react-toastify';
 
 export default function MechanicProfile() {
@@ -46,7 +44,14 @@ export default function MechanicProfile() {
   if (loadingProfile || loadingCenter) {
     return (
       <AppLayout title="Profile" subtitle="View your profile details." navLinks={mechanicNav}>
-        <LoadingPage />
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <Card>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Skeleton width="120px" height="14px" />
+              <SkeletonText lines={4} />
+            </div>
+          </Card>
+        </div>
       </AppLayout>
     );
   }
@@ -66,36 +71,38 @@ export default function MechanicProfile() {
 
   return (
     <AppLayout title="Profile" subtitle="Your account & assignment status." navLinks={mechanicNav}>
-      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
-            <SectionLabel>Mechanic Profile</SectionLabel>
-            <StatusBadge status={profile?.status || 'pending'} />
-          </div>
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+              <SectionLabel>Mechanic Profile</SectionLabel>
+              <StatusBadge status={profile?.status || 'pending'} />
+            </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <p style={labelStyle}>Full Name</p>
-            <p style={valStyle}>{profile?.name || 'N/A'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <p style={labelStyle}>Full Name</p>
+              <p style={valStyle}>{profile?.name || 'N/A'}</p>
 
-            <p style={labelStyle}>Email Address</p>
-            <p style={valStyle}>{profile?.email || 'N/A'}</p>
+              <p style={labelStyle}>Email Address</p>
+              <p style={valStyle}>{profile?.email || 'N/A'}</p>
 
-            <p style={labelStyle}>Phone Number</p>
-            <p style={valStyle}>{profile?.phone || 'N/A'}</p>
+              <p style={labelStyle}>Phone Number</p>
+              <p style={valStyle}>{profile?.phone || 'N/A'}</p>
 
-            <p style={labelStyle}>Assigned Service Center</p>
-            {profile?.service_center_id ? (
-              <p style={{ ...valStyle, marginBottom: 0 }}>{centerName || 'Loading...'}</p>
-            ) : (
-              <div style={{ marginTop: '4px' }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
-                  Not assigned to a service center
-                </p>
-                <TextLink to="/mechanic/service-centers">Browse Service Centers →</TextLink>
-              </div>
-            )}
-          </div>
-        </Card>
+              <p style={labelStyle}>Assigned Service Center</p>
+              {profile?.service_center_id ? (
+                <p style={{ ...valStyle, marginBottom: 0 }}>{centerName || 'Loading...'}</p>
+              ) : (
+                <div style={{ marginTop: '4px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 8px' }}>
+                    Not assigned to a service center
+                  </p>
+                  <TextLink to="/mechanic/service-centers">Browse Service Centers →</TextLink>
+                </div>
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );

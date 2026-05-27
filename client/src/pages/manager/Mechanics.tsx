@@ -3,9 +3,6 @@ import { toast } from 'react-toastify';
 import api from '../../api/axios';
 import AppLayout from '../../components/AppLayout';
 import { managerNav } from '../../lib/nav';
-import LoadingPage from '../../components/ui/LoadingPage';
-import EmptyState from '../../components/ui/EmptyState';
-import StatusBadge from '../../components/ui/StatusBadge';
 import { useManagerCenter } from '../../hooks/useManagerCenter';
 import { Users } from 'lucide-react';
 import {
@@ -16,7 +13,10 @@ import {
   TableRow,
   SuccessTextButton,
   DangerTextButton,
-} from '../../components/ui/primitives';
+  EmptyState,
+  StatusBadge,
+  SkeletonTable,
+} from '../../components/ui';
 
 export default function ManagerMechanics() {
   const { centerId, loading: centerLoading } = useManagerCenter();
@@ -57,7 +57,7 @@ export default function ManagerMechanics() {
   if (loading || centerLoading) {
     return (
       <AppLayout title="Mechanics" subtitle="Approve and manage your team." navLinks={managerNav}>
-        <LoadingPage />
+        <SkeletonTable rows={5} />
       </AppLayout>
     );
   }
@@ -107,58 +107,60 @@ export default function ManagerMechanics() {
 
   return (
     <AppLayout title="Mechanics" subtitle="Approve and manage your team." navLinks={managerNav}>
-      <section style={{ marginBottom: '32px' }}>
-        <SectionLabel>Pending approval</SectionLabel>
-        {pending.length === 0 ? (
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No pending requests.</p>
-        ) : (
-          <TableWrap>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Email</th>
-                  <th style={thStyle}>Status</th>
-                  <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pending.map((m) => (
-                  <TableRow key={m.id}>
-                    <MechanicCells m={m} showActions />
-                  </TableRow>
-                ))}
-              </tbody>
-            </table>
-          </TableWrap>
-        )}
-      </section>
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        <section style={{ marginBottom: '32px' }}>
+          <SectionLabel>Pending approval</SectionLabel>
+          {pending.length === 0 ? (
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No pending requests.</p>
+          ) : (
+            <TableWrap>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={thStyle}>Name</th>
+                    <th style={thStyle}>Email</th>
+                    <th style={thStyle}>Status</th>
+                    <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pending.map((m) => (
+                    <TableRow key={m.id}>
+                      <MechanicCells m={m} showActions />
+                    </TableRow>
+                  ))}
+                </tbody>
+              </table>
+            </TableWrap>
+          )}
+        </section>
 
-      <section>
-        <SectionLabel>Active mechanics</SectionLabel>
-        {active.length === 0 ? (
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No active mechanics yet.</p>
-        ) : (
-          <TableWrap>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                  <th style={thStyle}>Name</th>
-                  <th style={thStyle}>Email</th>
-                  <th style={thStyle}>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {active.map((m) => (
-                  <TableRow key={m.id}>
-                    <MechanicCells m={m} />
-                  </TableRow>
-                ))}
-              </tbody>
-            </table>
-          </TableWrap>
-        )}
-      </section>
+        <section>
+          <SectionLabel>Active mechanics</SectionLabel>
+          {active.length === 0 ? (
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: 0 }}>No active mechanics yet.</p>
+          ) : (
+            <TableWrap>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                    <th style={thStyle}>Name</th>
+                    <th style={thStyle}>Email</th>
+                    <th style={thStyle}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {active.map((m) => (
+                    <TableRow key={m.id}>
+                      <MechanicCells m={m} />
+                    </TableRow>
+                  ))}
+                </tbody>
+              </table>
+            </TableWrap>
+          )}
+        </section>
+      </div>
     </AppLayout>
   );
 }

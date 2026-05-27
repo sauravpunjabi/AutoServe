@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { ToastContainer } from "react-toastify";
@@ -9,6 +9,7 @@ import Register from "./pages/Register";
 import Landing from "./pages/Landing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound";
 
 import CustomerDashboard from "./pages/customer/Dashboard";
 import CustomerVehicles from "./pages/customer/Vehicles";
@@ -48,12 +49,13 @@ function App() {
         <ToastContainer
           position="bottom-right"
           autoClose={3000}
+          hideProgressBar={false}
           toastStyle={{
             background: '#141414',
             border: '1px solid #2a2a2a',
             color: '#fafafa',
-            borderRadius: '6px',
             fontSize: '12px',
+            borderRadius: '8px',
             fontFamily: 'Geist, sans-serif',
           }}
           closeButton={false}
@@ -104,7 +106,7 @@ function App() {
             <Route path="/admin/service-centers" element={<AdminServiceCenters />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </AuthProvider>

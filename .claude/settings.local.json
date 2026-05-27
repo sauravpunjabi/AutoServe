@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/design_extracted/autoserve/project/**)",
+      "Bash(npm run *)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(cd \"C:\\\\Users\\\\saura\\\\.claude\\\\projects\\\\c--Users-saura-OneDrive-Desktop-codes-fullstack-autoserve\\\\fbfbe8c8-8fca-4650-a894-185cbf3ad4fb\\\\tool-results\")",
+      "Read(//c/Users/saura/.claude/projects/**)",
+      "Bash(xargs cat *)",
+      "Bash(npx tsc *)",
+      "Bash(npx --prefix client tsc --noEmit)"
+    ]
+  }
+}

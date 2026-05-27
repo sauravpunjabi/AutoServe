@@ -59,7 +59,7 @@ body {
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -93,12 +93,22 @@ body {
 }
 
 /* New class names */
-.animate-in { animation: fadeIn 0.3s ease forwards; }
+.animate-in { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-slide { animation: slideIn 0.2s ease forwards; }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 2px var(--accent-glow) !important;
+}
+
+button, a {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
 .stagger > * {
   opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .stagger > *:nth-child(1) { animation-delay: 0.04s; }
 .stagger > *:nth-child(2) { animation-delay: 0.08s; }
@@ -114,7 +124,7 @@ body {
 
 .stagger-children > * {
   opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .stagger-children > *:nth-child(1) { animation-delay: 0.04s; }
 .stagger-children > *:nth-child(2) { animation-delay: 0.08s; }
@@ -134,6 +144,51 @@ body {
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius);
 }
-
 .pulse-teal { animation: pulse-teal 2s ease-in-out infinite; }
 .pulse-orange { animation: pulse-teal 2s ease-in-out infinite; }
+
+.kpi-strip .kpi-cell:last-child { border-right: none !important; }
+
+tr:last-child {
+  border-bottom: none !important;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 56px;
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  background-color: #141414;
+  border: 1px solid #2a2a2a;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: #fafafa;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 50;
+}
+
+a:hover > .sidebar-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.Toastify__progress-bar {
+  background: var(--accent) !important;
+}
+.Toastify__progress-bar--success {
+  background: var(--success) !important;
+}
+.Toastify__progress-bar--error {
+  background: var(--danger) !important;
+}
+.Toastify__progress-bar--info {
+  background: var(--info) !important;
+}
+.Toastify__progress-bar--warning {
+  background: var(--warning) !important;
+}
+
