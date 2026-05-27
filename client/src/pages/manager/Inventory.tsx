@@ -15,7 +15,6 @@ import {
   TableWrap,
   thStyle,
   tdStyle,
-  TableRow,
 } from '../../components/ui/primitives';
 
 export default function ManagerInventory() {
