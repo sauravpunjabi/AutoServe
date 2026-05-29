@@ -18,7 +18,6 @@ import {
   Modal,
   PrimaryButton,
   SecondaryButton,
-  CapacityBar,
 } from '../../components/ui';
 import { Car, Clock, Check, ChevronRight, CreditCard, Download, CalendarPlus, FileText, AlertCircle } from 'lucide-react';
 

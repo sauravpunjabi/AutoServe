@@ -22,10 +22,6 @@ import {
 } from '../../components/ui';
 import { Users, Package, Check, X, RefreshCw, ShoppingCart } from 'lucide-react';
 
-function fmtMoney(n: number) {
-  return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
 function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
@@ -49,10 +45,9 @@ function PriorityChip({ p }: { p: Priority }) {
 
 // ─── Approval Queue ───────────────────────────────────────────────────────────
 function ApprovalQueue({
-  bookings, mechanics, onApprove, onReject,
+  bookings, onApprove, onReject,
 }: {
   bookings: any[];
-  mechanics: any[];
   onApprove: (b: any) => void;
   onReject: (id: string) => void;
 }) {
@@ -509,7 +504,6 @@ export default function ManagerDashboard() {
         {/* Approval queue */}
         <ApprovalQueue
           bookings={pending}
-          mechanics={mechanics}
           onApprove={handleApprove}
           onReject={handleReject}
         />
