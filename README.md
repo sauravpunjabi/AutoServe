@@ -2,7 +2,7 @@
 
 A Smart Vehicle Maintenance & Service Management System that connects customers, mechanics, service center managers, and administrators on a single platform.
 
-🔗 **Live Demo**: https://auto-serve-three.vercel.app
+🔗 **Live Demo**: https://autoserve-three.vercel.app
 
 ## Demo Accounts
 
