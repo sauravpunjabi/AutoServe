@@ -180,7 +180,7 @@ export default function CustomerBookService() {
                           fontWeight: 600,
                           color: 'var(--accent)',
                           whiteSpace: 'nowrap',
-                          fontFamily: 'DM Mono, monospace',
+                          fontFamily: 'Geist Mono, monospace',
                         }}
                       >
                         ₹{Number(s.base_price).toLocaleString()}
@@ -204,7 +204,7 @@ export default function CustomerBookService() {
                     style={{
                       fontWeight: 600,
                       color: 'var(--text-primary)',
-                      fontFamily: 'DM Mono, monospace',
+                      fontFamily: 'Geist Mono, monospace',
                     }}
                   >
                     ₹{estimatedTotal.toLocaleString()}

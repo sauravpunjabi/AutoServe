@@ -67,7 +67,7 @@ export default function ManagerInvoices() {
               <tbody>
                 {invoices.map((inv) => (
                   <TableRow key={inv.id}>
-                    <td style={{ ...tdStyle, fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                    <td style={{ ...tdStyle, fontFamily: 'Geist Mono, monospace', fontSize: '12px' }}>
                       {inv.id.slice(0, 8)}
                     </td>
                     <td style={tdStyle}>{inv.customer_name}</td>

@@ -1,58 +1,134 @@
-import { useState } from "react";
-import api from "../../api/axios";
-import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import AppLayout from '../../components/AppLayout';
+import { managerNav } from '../../lib/nav';
+import { Card, SectionLabel, TextInput, PrimaryButton } from '../../components/ui';
+
+const fieldLabel: React.CSSProperties = {
+  fontSize: '11px',
+  fontWeight: 500,
+  color: 'var(--text-muted)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.08em',
+  margin: '0 0 6px',
+};
 
 const CreateServiceCenter = () => {
-    const { user } = useAuth();
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        name: "",
-        location: "",
-        contact: ""
-    });
-    const [error, setError] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    location: '',
+    contact: '',
+  });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-    if (user?.role !== "manager") {
-        return <div className="p-8 text-red-500">Access Denied: Managers Only</div>;
-    }
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await api.post("/service-centers", formData); // Note: BaseURL is /api/auth currently, need to fix
-            // Actually, axios instance base URL is problematic if hardcoded to /auth
-            navigate("/dashboard");
-        } catch (err: any) {
-            setError(err.response?.data || "Failed to create service center");
-        }
-    };
-
+  if (user?.role !== 'manager') {
     return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow-md">
-            <h2 className="text-2xl font-bold mb-6">Create Service Center</h2>
-            {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
-            <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                    <label className="block mb-2 font-medium">Name</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-                <div className="mb-4">
-                    <label className="block mb-2 font-medium">Location</label>
-                    <input type="text" name="location" value={formData.location} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-                <div className="mb-6">
-                    <label className="block mb-2 font-medium">Contact</label>
-                    <input type="text" name="contact" value={formData.contact} onChange={handleChange} className="w-full p-2 border rounded" required />
-                </div>
-                <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">Create</button>
-            </form>
-        </div>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+          backgroundColor: 'var(--bg)',
+          color: 'var(--danger)',
+          fontFamily: 'Geist, sans-serif',
+          fontSize: '14px',
+        }}
+      >
+        Access Denied: Managers Only
+      </div>
     );
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await api.post('/service-centers', formData);
+      navigate('/manager/dashboard');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to create service center');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <AppLayout
+      title="Create service center"
+      subtitle="Set up your center to start accepting bookings."
+      navLinks={managerNav}
+    >
+      <div style={{ animation: 'fadeInUp 0.25s ease forwards' }}>
+        <Card style={{ maxWidth: '420px' }}>
+          <SectionLabel>New center</SectionLabel>
+          {error && (
+            <div
+              style={{
+                padding: '10px 14px',
+                marginBottom: '16px',
+                borderRadius: 'var(--radius)',
+                border: '1px solid var(--danger)',
+                backgroundColor: 'rgba(239,68,68,0.08)',
+                fontSize: '13px',
+                color: 'var(--danger)',
+              }}
+            >
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <p style={fieldLabel}>Name</p>
+              <TextInput
+                required
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="e.g. AutoServe Downtown"
+              />
+            </div>
+            <div>
+              <p style={fieldLabel}>Location</p>
+              <TextInput
+                required
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="e.g. 123 Main St, City"
+              />
+            </div>
+            <div>
+              <p style={fieldLabel}>Contact</p>
+              <TextInput
+                required
+                type="text"
+                name="contact"
+                value={formData.contact}
+                onChange={handleChange}
+                placeholder="e.g. (555) 123-4567"
+              />
+            </div>
+            <PrimaryButton type="submit" disabled={submitting} style={{ alignSelf: 'flex-start', marginTop: '8px' }}>
+              {submitting ? 'Creating…' : 'Create center'}
+            </PrimaryButton>
+          </form>
+        </Card>
+      </div>
+    </AppLayout>
+  );
 };
 
 export default CreateServiceCenter;

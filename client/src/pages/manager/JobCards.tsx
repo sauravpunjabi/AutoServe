@@ -69,7 +69,7 @@ export default function ManagerJobCards() {
                       <Link
                         to={`/manager/job-cards/${j.id}`}
                         style={{
-                          fontFamily: 'DM Mono, monospace',
+                          fontFamily: 'Geist Mono, monospace',
                           fontSize: '12px',
                           color: 'var(--accent)',
                           textDecoration: 'none',
@@ -83,13 +83,13 @@ export default function ManagerJobCards() {
                       {j.booking_date ? new Date(j.booking_date).toLocaleDateString() : '—'}
                     </td>
                     <td style={tdStyle}>
-                      <span style={{ fontSize: '12px', color: '#fafafa' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
                         {j.services?.[0]?.name || j.service_type || 'N/A'}
                       </span>
                       {(j.services?.length || 0) > 1 && (
-                        <span style={{ 
+                        <span style={{
                           marginLeft: '6px', fontSize: '10px',
-                          color: '#f97316', fontWeight: 500 
+                          color: 'var(--accent)', fontWeight: 500
                         }}>+{j.services.length - 1} more</span>
                       )}
                     </td>

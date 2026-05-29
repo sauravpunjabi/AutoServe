@@ -217,10 +217,10 @@ export default function ManagerInventory() {
                           />
                         </div>
                       </td>
-                      <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                      <td style={{ ...tdStyle, color: 'var(--text-secondary)', fontFamily: 'Geist Mono, monospace', fontSize: '12px' }}>
                         ₹{Number(i.unit_price).toFixed(2)}
                       </td>
-                      <td style={{ ...tdStyle, color: 'var(--text-muted)', fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                      <td style={{ ...tdStyle, color: 'var(--text-muted)', fontFamily: 'Geist Mono, monospace', fontSize: '12px' }}>
                         {i.low_stock_threshold}
                       </td>
                     </tr>

@@ -1,770 +1,477 @@
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Calendar, Wrench, Package, FileText, Zap, Building2, Receipt } from 'lucide-react';
+import { Gauge, Inbox, ClipboardList, Package, Receipt, ShieldCheck, User, Wrench, GaugeCircle, ArrowRight } from 'lucide-react';
 
-function useCountUp(end: number, duration: number = 1200, active: boolean = false) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let startTime: number | null = null;
-    let animId: number;
-    const frame = (ts: number) => {
-      if (!startTime) startTime = ts;
-      const progress = Math.min((ts - startTime) / duration, 1);
-      // Easing: easeOutCubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * end));
-      if (progress < 1) {
-        animId = requestAnimationFrame(frame);
-      }
-    };
-    animId = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(animId);
-  }, [active, end, duration]);
-  return count;
+const FEATURES = [
+  { icon: Gauge,         k: '01', title: 'Operations dashboard',  desc: 'Bay occupancy, SLA, revenue, mechanic utilization in one tactical view. Refreshes every 4 seconds.' },
+  { icon: Inbox,         k: '02', title: 'Approval inbox',         desc: 'Triage incoming bookings with priority and customer history. One-tap mechanic assignment.' },
+  { icon: ClipboardList, k: '03', title: 'Job cards',              desc: 'Step-by-step task lists with timestamps, parts consumption, photos and customer sign-off.' },
+  { icon: Package,       k: '04', title: 'Parts inventory',        desc: 'Live stock counts, reorder triggers, supplier ledger. Auto-consume on job complete.' },
+  { icon: Receipt,       k: '05', title: 'Customer billing',       desc: 'Itemized invoices issued automatically. Card on file, ACH or counter pay.' },
+  { icon: ShieldCheck,   k: '06', title: 'Admin command',          desc: 'Regional rollout, audit log, user provisioning, SOC 2 controls. Built for multi-tenant.' },
+];
+
+const ROLES = [
+  { r: 'Customer', icon: User,         desc: 'Book service, track jobs in real time, pay invoices, manage your garage.' },
+  { r: 'Mechanic', icon: Wrench,       desc: 'Workbench-style task list, parts requisition, on-shift dispatch from a phone.' },
+  { r: 'Manager',  icon: GaugeCircle,  desc: 'Floor command center: bays, mechanics, approvals, inventory, reviews.' },
+  { r: 'Admin',    icon: ShieldCheck,  desc: 'Multi-center fleet view, audit log, user provisioning and regional SLA.' },
+];
+
+function NavLink({ children, href }: { children: React.ReactNode; href?: string }) {
+  return (
+    <a
+      href={href ?? '#'}
+      style={{ fontSize: '12px', color: 'var(--text-secondary)', textDecoration: 'none', transition: 'color 0.15s ease' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)'; }}
+    >
+      {children}
+    </a>
+  );
 }
-
-const useInView = (threshold = 0.15) => {
-  const ref = useRef<any>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setInView(true); },
-      { threshold }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-  return [ref, inView] as const;
-};
-
-const features = [
-  { icon: Car, title: 'Vehicle Management', desc: 'Track all your vehicles and complete service history in one place' },
-  { icon: Calendar, title: 'Smart Booking', desc: 'Book multiple services at once with live price calculation' },
-  { icon: Wrench, title: 'Job Card System', desc: 'Digital job cards with real-time task-level progress tracking' },
-  { icon: Package, title: 'Inventory Control', desc: 'Track parts, get low stock alerts, auto-deduct on usage' },
-  { icon: FileText, title: 'Digital Invoices', desc: 'Auto-generated invoices with PDF download and online payment' },
-  { icon: Zap, title: 'Real-time Updates', desc: 'Live job progress via WebSockets — no page refresh needed' },
-];
-
-const steps = [
-  { num: '01', icon: Building2, title: 'Setup', desc: 'Manager creates a service center, mechanics join' },
-  { num: '02', icon: Calendar, title: 'Book', desc: 'Customer selects services and books appointment' },
-  { num: '03', icon: Wrench, title: 'Service', desc: 'Mechanic works through digital job card tasks' },
-  { num: '04', icon: Receipt, title: 'Invoice', desc: 'Invoice auto-generated, customer pays online' },
-];
 
 export default function Landing() {
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [hoveredCardIdx, setHoveredCardIdx] = useState<number | null>(null);
-  const [ctaHovered, setCtaHovered] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const [featRef, featInView] = useInView(0.15);
-  const [howRef, howInView] = useInView(0.15);
-  const [statsRef, statsInView] = useInView(0.15);
-  const [ctaRef, ctaInView] = useInView(0.15);
-
-  const vehiclesVal = useCountUp(10, 1200, statsInView);
-  const satisfactionVal = useCountUp(98, 1200, statsInView);
-  const mechanicsVal = useCountUp(50, 1200, statsInView);
-
   return (
-    <div style={{ backgroundColor: '#080808', color: '#fafafa', minHeight: '100vh', fontFamily: 'Geist, sans-serif' }}>
-      
-      {/* HEADER — sticky, 52px height */}
-      <header
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '52px',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px',
-          backgroundColor: scrolled ? 'rgba(8, 8, 8, 0.9)' : '#080808',
-          backdropFilter: scrolled ? 'blur(8px)' : 'none',
-          borderBottom: scrolled ? '1px solid #1f1f1f' : '1px solid transparent',
-          transition: 'background-color 0.2s ease, border-bottom 0.2s ease',
-        }}
-      >
-        <div style={{ width: '100%', maxWidth: '960px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* Left: wrench icon + "AutoServe" */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <Wrench size={14} color="#f97316" />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#fafafa', letterSpacing: '-0.03em' }}>
-              AutoServe
-            </span>
-          </Link>
+    <div style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)', minHeight: '100vh', fontFamily: 'Geist, sans-serif' }}>
 
-          {/* Right: Log in + Get started */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Link
-              to="/login"
-              style={{
-                fontSize: '13px',
-                fontWeight: 500,
-                color: '#717171',
-                textDecoration: 'none',
-                padding: '5px 10px',
-                borderRadius: '6px',
-                transition: 'color 0.15s ease, background-color 0.15s ease',
+      {/* Header */}
+      <header style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 30,
+        height: '56px',
+        display: 'flex',
+        alignItems: 'center',
+        borderBottom: `1px solid ${scrolled ? 'var(--border)' : 'transparent'}`,
+        backgroundColor: scrolled ? 'rgba(11,14,20,0.85)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(8px)' : 'none',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease',
+      }}>
+        <div style={{
+          maxWidth: '1320px', margin: '0 auto', width: '100%',
+          padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '28px', height: '28px',
+              border: '1px solid rgba(16,185,129,0.7)',
+              borderRadius: '6px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ display: 'block', width: '10px', height: '10px', backgroundColor: '#10B981', borderRadius: '1px' }} />
+            </div>
+            <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>AutoServe</span>
+            <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', letterSpacing: '0.18em', color: 'var(--text-muted)', textTransform: 'uppercase', marginLeft: '4px' }}>
+              Workshop OS
+            </span>
+          </div>
+
+          <nav style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
+            <NavLink>Product</NavLink>
+            <NavLink>Centers</NavLink>
+            <NavLink>Pricing</NavLink>
+            <NavLink>Docs</NavLink>
+            <NavLink>Changelog</NavLink>
+          </nav>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Link to="/login" style={{
+              display: 'inline-flex', alignItems: 'center', height: '32px', padding: '0 12px',
+              fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)',
+              textDecoration: 'none', borderRadius: '2px',
+              transition: 'color 0.15s ease, background-color 0.15s ease',
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#fafafa';
-                e.currentTarget.style.backgroundColor = '#141414';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = '#717171';
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-secondary)';
                 e.currentTarget.style.backgroundColor = 'transparent';
               }}
             >
-              Log in
+              Sign in
             </Link>
-            <Link
-              to="/register"
-              style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#080808',
-                backgroundColor: '#f97316',
-                textDecoration: 'none',
-                padding: '6px 14px',
-                borderRadius: '6px',
-                transition: 'background-color 0.15s ease, transform 0.15s ease',
+            <Link to="/register" style={{
+              display: 'inline-flex', alignItems: 'center', height: '32px', padding: '0 14px',
+              fontSize: '12px', fontWeight: 500,
+              color: '#0B0E14', backgroundColor: '#10B981',
+              border: '1px solid #10B981', borderRadius: '2px', textDecoration: 'none',
+              transition: 'background-color 0.1s ease, border-color 0.1s ease, color 0.1s ease',
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--text-primary)';
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#fb923c';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f97316';
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = '#10B981';
+                e.currentTarget.style.borderColor = '#10B981';
               }}
             >
-              Get started
+              Open account
             </Link>
           </div>
         </div>
       </header>
 
-      {/* HERO — full viewport height, flex center */}
-      <section
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '52px 24px 0',
-          boxSizing: 'border-box',
-          backgroundColor: '#080808',
-        }}
-      >
-        <div style={{ maxWidth: '600px', width: '100%', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          
-          {/* Eyebrow */}
-          <div
-            style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              color: '#717171',
-              marginBottom: '20px',
-            }}
-          >
-            Vehicle Service Management
+      {/* HERO */}
+      <section style={{ borderBottom: '1px solid var(--border)', position: 'relative' }}>
+        <div className="grid-bg" style={{ position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none' }} />
+        <div style={{ position: 'relative', maxWidth: '1320px', margin: '0 auto', padding: '80px 24px 0' }}>
+          <div style={{
+            fontFamily: 'Geist Mono, monospace',
+            fontSize: '10px',
+            letterSpacing: '0.18em',
+            color: 'var(--accent)',
+            textTransform: 'uppercase',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}>
+            <span className="live-dot" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
+            142 service centers live across NORAM
           </div>
 
-          {/* Headline */}
-          <h1
-            style={{
-              fontSize: 'clamp(36px, 5vw, 60px)',
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              lineHeight: 1.08,
-              color: '#fafafa',
-              margin: '0',
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-              transition: 'opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s',
-            }}
-          >
-            The <span style={{ color: '#f97316' }}>smarter</span> way to manage vehicle services.
+          <h1 style={{
+            fontSize: 'clamp(48px, 6vw, 80px)',
+            lineHeight: 0.95,
+            fontWeight: 500,
+            letterSpacing: '-0.03em',
+            color: 'var(--text-primary)',
+            margin: '0 0 28px',
+            maxWidth: '900px',
+          }}>
+            Run the service bay,<br />
+            <span style={{ color: 'var(--text-secondary)' }}>not the spreadsheet.</span>
           </h1>
 
-          {/* Subheadline */}
-          <p
-            style={{
-              fontSize: '15px',
-              color: '#717171',
-              lineHeight: 1.6,
-              maxWidth: '460px',
-              margin: '16px auto 0',
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-              transition: 'opacity 0.5s ease 0.25s, transform 0.5s ease 0.25s',
-            }}
-          >
-            One platform for customers, mechanics, managers, and admins. Book services, track jobs, manage inventory.
+          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', margin: '0 0 36px', maxWidth: '680px', lineHeight: 1.65 }}>
+            AutoServe is the operating layer for modern automotive service centers. Live job telemetry, mechanic capacity, parts inventory and customer billing — on one terminal, for everyone in the workflow.
           </p>
 
-          {/* CTA row */}
-          <div
-            style={{
-              marginTop: '32px',
-              display: 'flex',
-              gap: '10px',
-              justifyContent: 'center',
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-              transition: 'opacity 0.5s ease 0.4s, transform 0.5s ease 0.4s',
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '80px', flexWrap: 'wrap' }}>
+            <Link to="/register" style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              height: '44px', padding: '0 20px',
+              fontSize: '14px', fontWeight: 500,
+              color: '#0B0E14', backgroundColor: '#10B981',
+              border: '1px solid #10B981', borderRadius: '2px', textDecoration: 'none',
+              transition: 'background-color 0.1s ease',
             }}
-          >
-            <Link
-              to="/register"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '36px',
-                padding: '0 20px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#080808',
-                backgroundColor: '#f97316',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                transition: 'background-color 0.15s ease',
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--text-primary)';
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fb923c'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f97316'; }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = '#10B981';
+                e.currentTarget.style.borderColor = '#10B981';
+              }}
             >
-              Get started
+              Start free trial <ArrowRight size={14} />
             </Link>
-            <Link
-              to="/login"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '36px',
-                padding: '0 20px',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: '#fafafa',
-                backgroundColor: 'transparent',
-                border: '1px solid #1f1f1f',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                transition: 'border-color 0.15s ease, color 0.15s ease',
+            <Link to="/login" style={{
+              display: 'inline-flex', alignItems: 'center',
+              height: '44px', padding: '0 20px',
+              fontSize: '14px', fontWeight: 500,
+              color: 'var(--text-primary)', backgroundColor: 'transparent',
+              border: '1px solid var(--border-strong)', borderRadius: '2px', textDecoration: 'none',
+              transition: 'background-color 0.1s ease, color 0.1s ease',
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.color = '#0B0E14';
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#2a2a2a';
-                e.currentTarget.style.color = '#fafafa';
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--text-primary)';
               }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#1f1f1f';
-                e.currentTarget.style.color = '#fafafa';
+            >
+              Sign in
+            </Link>
+            <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>
+              14-day trial · no card
+            </span>
+          </div>
+        </div>
+
+        {/* Mock dashboard */}
+        <div style={{ maxWidth: '1320px', margin: '0 auto', padding: '0 24px 80px' }}>
+          <div style={{ border: '1px solid var(--border-strong)', borderRadius: '6px', backgroundColor: 'var(--bg-card)', overflow: 'hidden' }}>
+            {/* Window chrome */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0 20px', height: '44px',
+              borderBottom: '1px solid var(--border)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.6)' }} />
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(234,179,8,0.6)' }} />
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(16,185,129,0.6)' }} />
+                <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '11px', color: 'var(--text-muted)', marginLeft: '12px' }}>
+                  autoserve · sf-mission-01 · live
+                </span>
+              </div>
+              <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '11px', color: 'var(--text-secondary)' }}>
+                {new Date().toLocaleTimeString('en-US', { hour12: true })}
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+              {/* Bays */}
+              <div style={{ padding: '24px', borderRight: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+                  Active bays · 6 of 6 instrumented
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  {[
+                    { id: 'BAY-01', status: 'occupied', vehicle: 'Tesla Model 3', eta: 'ETA 14:30' },
+                    { id: 'BAY-02', status: 'in_progress', vehicle: 'Honda Civic', eta: 'ETA 15:00' },
+                    { id: 'BAY-03', status: 'open', vehicle: '— available —', eta: null },
+                    { id: 'BAY-04', status: 'occupied', vehicle: 'BMW X5', eta: 'ETA 16:45' },
+                    { id: 'BAY-05', status: 'pending', vehicle: 'Ford F-150', eta: 'ETA 17:00' },
+                    { id: 'BAY-06', status: 'open', vehicle: '— available —', eta: null },
+                  ].map(bay => {
+                    const colors: Record<string, string> = {
+                      occupied: 'rgba(59,130,246,0.3)',
+                      in_progress: 'rgba(59,130,246,0.3)',
+                      open: 'rgba(16,185,129,0.3)',
+                      pending: 'rgba(234,179,8,0.3)',
+                    };
+                    return (
+                      <div key={bay.id} style={{
+                        border: `1px solid ${colors[bay.status] ?? 'var(--border)'}`,
+                        borderRadius: '4px', padding: '12px',
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                          <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '11px', color: 'var(--text-secondary)' }}>{bay.id}</span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {bay.vehicle}
+                        </div>
+                        {bay.eta && (
+                          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                            {bay.eta}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div style={{ padding: '24px' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>Today · revenue ladder</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', border: '1px solid var(--border)', borderRadius: '4px', overflow: 'hidden', marginBottom: '12px' }}>
+                  {[
+                    { label: 'Booked', value: '$18,420', accent: false },
+                    { label: 'Goal',   value: '$22,000', accent: true  },
+                  ].map((s, i) => (
+                    <div key={s.label} style={{ padding: '12px', borderRight: i === 0 ? '1px solid var(--border)' : 'none' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{s.label}</div>
+                      <div style={{
+                        fontFamily: 'Geist Mono, monospace', fontSize: '16px',
+                        color: s.accent ? 'var(--accent)' : 'var(--text-primary)',
+                        fontVariantNumeric: 'tabular-nums', marginTop: '4px',
+                      }}>
+                        {s.value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ border: '1px solid var(--border)', borderRadius: '4px', padding: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>SLA today</span>
+                    <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>98.2%</span>
+                  </div>
+                  <div style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: '1px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: '98.2%', backgroundColor: 'var(--accent)' }} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section style={{ borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1320px', margin: '0 auto', padding: '80px 24px' }}>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', letterSpacing: '0.18em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '16px' }}>
+            Modules
+          </div>
+          <h2 style={{ fontSize: '40px', lineHeight: 1.1, fontWeight: 500, letterSpacing: '-0.03em', color: 'var(--text-primary)', margin: '0 0 48px', maxWidth: '600px' }}>
+            Five surfaces. One source of truth.
+          </h2>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            border: '1px solid var(--border)',
+            borderRadius: '6px',
+            overflow: 'hidden',
+          }}>
+            {FEATURES.map((f, i) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.k}
+                  style={{
+                    padding: '24px',
+                    borderRight: (i + 1) % 3 !== 0 ? '1px solid var(--border)' : 'none',
+                    borderBottom: i < 3 ? '1px solid var(--border)' : 'none',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-elevated)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <div style={{
+                      width: '40px', height: '40px',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: '6px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--accent)',
+                    }}>
+                      <Icon size={16} />
+                    </div>
+                    <span style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.1em' }}>{f.k}</span>
+                  </div>
+                  <div style={{ fontSize: '15px', fontWeight: 500, color: 'var(--text-primary)', marginBottom: '8px' }}>{f.title}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{f.desc}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ROLES */}
+      <section style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'rgba(15,18,24,0.4)' }}>
+        <div style={{ maxWidth: '1320px', margin: '0 auto', padding: '80px 24px' }}>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', letterSpacing: '0.18em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '16px' }}>
+            Who it's for
+          </div>
+          <h2 style={{ fontSize: '40px', lineHeight: 1.1, fontWeight: 500, letterSpacing: '-0.03em', color: 'var(--text-primary)', margin: '0 0 48px', maxWidth: '600px' }}>
+            Built for four kinds of operator.
+          </h2>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+            border: '1px solid var(--border)', borderRadius: '6px', overflow: 'hidden',
+          }}>
+            {ROLES.map((x, i) => {
+              const Icon = x.icon;
+              return (
+                <div key={x.r} style={{
+                  padding: '24px',
+                  backgroundColor: 'var(--bg-card)',
+                  borderRight: i < 3 ? '1px solid var(--border)' : 'none',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                    <Icon size={14} style={{ color: 'var(--accent)' }} />
+                    <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>{x.r}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.65, marginBottom: '20px' }}>{x.desc}</div>
+                  <Link to="/login" style={{
+                    fontSize: '12px', color: 'var(--accent)', textDecoration: 'none',
+                    display: 'inline-flex', alignItems: 'center', gap: '6px',
+                    transition: 'gap 0.15s ease',
+                  }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.gap = '10px'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.gap = '6px'; }}
+                  >
+                    View workspace <ArrowRight size={11} />
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ borderBottom: '1px solid var(--border)' }}>
+        <div style={{
+          maxWidth: '1320px', margin: '0 auto', padding: '80px 24px',
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '32px', flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', letterSpacing: '0.18em', color: 'var(--accent)', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Ready
+            </div>
+            <h2 style={{ fontSize: '44px', lineHeight: 1, fontWeight: 500, letterSpacing: '-0.03em', color: 'var(--text-primary)', margin: '0 0 20px' }}>
+              Spin up a center<br />in 12 minutes.
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, maxWidth: '480px', lineHeight: 1.65 }}>
+              Onboarding wizard handles bays, mechanics, services and inventory seed in one pass.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <Link to="/register" style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              height: '44px', padding: '0 20px',
+              fontSize: '14px', fontWeight: 500,
+              color: '#0B0E14', backgroundColor: '#10B981',
+              border: '1px solid #10B981', borderRadius: '2px', textDecoration: 'none',
+              transition: 'background-color 0.1s ease',
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--text-primary)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = '#10B981';
+                e.currentTarget.style.borderColor = '#10B981';
+              }}
+            >
+              Open account <ArrowRight size={14} />
+            </Link>
+            <Link to="/login" style={{
+              display: 'inline-flex', alignItems: 'center',
+              height: '44px', padding: '0 20px',
+              fontSize: '14px', fontWeight: 500,
+              color: 'var(--text-primary)', backgroundColor: 'transparent',
+              border: '1px solid var(--border-strong)', borderRadius: '2px', textDecoration: 'none',
+              transition: 'background-color 0.1s ease, color 0.1s ease',
+            }}
+              onMouseEnter={e => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.color = '#0B0E14';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'var(--text-primary)';
               }}
             >
               Sign in
             </Link>
           </div>
-
-          {/* Metrics row */}
-          <div
-            style={{
-              marginTop: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? 'translateY(0)' : 'translateY(12px)',
-              transition: 'opacity 0.5s ease 0.55s, transform 0.5s ease 0.55s',
-            }}
-          >
-            {[
-              { val: '10K+', label: 'Vehicles Serviced' },
-              { val: '98%', label: 'Satisfaction' },
-              { val: '50+', label: 'Mechanics' },
-              { val: '24/7', label: 'Support' }
-            ].map((metric, i) => (
-              <Fragment key={metric.label}>
-                <div style={{ padding: '0 32px', textAlign: 'left' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 600, fontFamily: 'Geist Mono, monospace', color: '#fafafa' }}>
-                    {metric.val}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#3d3d3d', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
-                    {metric.label}
-                  </div>
-                </div>
-                {i < 3 && (
-                  <div style={{ width: '1px', height: '24px', backgroundColor: '#1f1f1f' }} />
-                )}
-              </Fragment>
-            ))}
-          </div>
-
         </div>
       </section>
 
-      {/* CSS STYLES FOR RESPONSIVENESS AND ANIMATION */}
-      <style>{`
-        @media (max-width: 768px) {
-          .features-grid {
-            grid-template-columns: 1fr !important;
-          }
-          .how-it-works-grid {
-            grid-template-columns: 1fr !important;
-            gap: 40px !important;
-          }
-          .connecting-line {
-            display: none !important;
-          }
-          .stats-grid {
-            grid-template-columns: 1fr !important;
-            gap: 24px !important;
-          }
-          .stat-item {
-            border-right: none !important;
-            border-bottom: 1px solid #1f1f1f !important;
-            padding: 16px 0 !important;
-          }
-          .stat-item:last-child {
-            border-bottom: none !important;
-          }
-        }
-      `}</style>
-
-      {/* SECTION DIVIDER */}
-      <div style={{ borderTop: '1px solid #1f1f1f' }} />
-
-      {/* FEATURES SECTION */}
-      <section
-        ref={featRef}
-        style={{
-          borderTop: '1px solid #1f1f1f',
-          padding: '96px 24px',
-          backgroundColor: '#080808',
-        }}
-      >
-        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
-          
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <div
-              style={{
-                fontSize: '10px',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: '#717171',
-                marginBottom: '12px',
-              }}
-            >
-              FEATURES
-            </div>
-            <h2
-              style={{
-                fontSize: '36px',
-                fontWeight: 700,
-                letterSpacing: '-0.03em',
-                color: '#fafafa',
-                margin: 0,
-              }}
-            >
-              Everything you need
-            </h2>
-          </div>
-
-          {/* Grid Container */}
-          <div
-            className="features-grid"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '1px',
-              backgroundColor: '#1f1f1f',
-              border: '1px solid #1f1f1f',
-              borderRadius: '10px',
-              overflow: 'hidden',
-            }}
-          >
-            {features.map((feat, i) => {
-              const Icon = feat.icon;
-              return (
-                <div
-                  key={feat.title}
-                  style={{
-                    backgroundColor: hoveredCardIdx === i ? '#141414' : '#0f0f0f',
-                    padding: '28px',
-                    transition: 'background-color 0.15s ease, opacity 0.3s ease, transform 0.3s ease',
-                    opacity: featInView ? 1 : 0,
-                    transform: featInView ? 'translateY(0)' : 'translateY(10px)',
-                    transitionDelay: `${i * 0.05}s`,
-                    cursor: 'default',
-                  }}
-                  onMouseEnter={() => setHoveredCardIdx(i)}
-                  onMouseLeave={() => setHoveredCardIdx(null)}
-                >
-                  <Icon size={16} color="#f97316" />
-                  <h3
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: '#fafafa',
-                      marginTop: '14px',
-                      marginBottom: 0,
-                    }}
-                  >
-                    {feat.title}
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: '12px',
-                      color: '#717171',
-                      marginTop: '6px',
-                      lineHeight: 1.6,
-                      marginRight: 0,
-                      marginLeft: 0,
-                      marginBottom: 0,
-                    }}
-                  >
-                    {feat.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
-      {/* HOW IT WORKS SECTION */}
-      <section
-        ref={howRef}
-        style={{
-          backgroundColor: '#0f0f0f',
-          borderTop: '1px solid #1f1f1f',
-          borderBottom: '1px solid #1f1f1f',
-          padding: '96px 24px',
-        }}
-      >
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <div
-              style={{
-                fontSize: '10px',
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                color: '#717171',
-                marginBottom: '12px',
-              }}
-            >
-              HOW IT WORKS
-            </div>
-            <h2
-              style={{
-                fontSize: '32px',
-                fontWeight: 700,
-                letterSpacing: '-0.03em',
-                color: '#fafafa',
-                margin: 0,
-              }}
-            >
-              From booking to invoice in four steps
-            </h2>
-          </div>
-
-          {/* Row Container */}
-          <div
-            className="how-it-works-grid"
-            style={{
-              position: 'relative',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
-              gap: 0,
-            }}
-          >
-            {/* Connecting line */}
-            <div
-              className="connecting-line"
-              style={{
-                position: 'absolute',
-                top: '22px',
-                left: '12.5%',
-                right: '12.5%',
-                height: '1px',
-                backgroundColor: '#1f1f1f',
-                zIndex: 0,
-              }}
-            />
-
-            {steps.map((step, i) => {
-              const Icon = step.icon;
-              return (
-                <div
-                  key={step.num}
-                  style={{
-                    position: 'relative',
-                    zIndex: 1,
-                    textAlign: 'center',
-                    opacity: howInView ? 1 : 0,
-                    transform: howInView ? 'translateY(0)' : 'translateY(10px)',
-                    transition: `opacity 0.3s ease ${i * 0.08}s, transform 0.3s ease ${i * 0.08}s`,
-                  }}
-                >
-                  {/* Number */}
-                  <div
-                    style={{
-                      fontSize: '10px',
-                      fontFamily: 'Geist Mono, monospace',
-                      color: '#f97316',
-                      marginBottom: '8px',
-                    }}
-                  >
-                    {step.num}
-                  </div>
-                  
-                  {/* Icon Circle */}
-                  <div
-                    style={{
-                      width: '44px',
-                      height: '44px',
-                      backgroundColor: '#080808',
-                      border: '1px solid #1f1f1f',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto',
-                    }}
-                  >
-                    <Icon size={18} color="#717171" />
-                  </div>
-
-                  {/* Title */}
-                  <h3
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 600,
-                      color: '#fafafa',
-                      marginTop: '14px',
-                      marginBottom: 0,
-                    }}
-                  >
-                    {step.title}
-                  </h3>
-                  
-                  {/* Description */}
-                  <p
-                    style={{
-                      fontSize: '11px',
-                      color: '#717171',
-                      marginTop: '4px',
-                      lineHeight: 1.5,
-                      marginRight: 0,
-                      marginLeft: 0,
-                      marginBottom: 0,
-                    }}
-                  >
-                    {step.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-        </div>
-      </section>
-
-      {/* STATS SECTION */}
-      <section
-        ref={statsRef}
-        style={{
-          backgroundColor: '#080808',
-          borderTop: '1px solid #1f1f1f',
-          padding: '64px 24px',
-        }}
-      >
-        <div
-          className="stats-grid"
-          style={{
-            maxWidth: '700px',
-            margin: '0 auto',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-          }}
-        >
-          {[
-            { val: `${vehiclesVal}K+`, label: 'Vehicles Serviced' },
-            { val: `${satisfactionVal}%`, label: 'Satisfaction' },
-            { val: `${mechanicsVal}+`, label: 'Mechanics' },
-            { val: '24/7', label: 'Support', fadeOnly: true }
-          ].map((stat, i) => (
-            <div
-              key={stat.label}
-              className="stat-item"
-              style={{
-                textAlign: 'center',
-                padding: '0 32px',
-                borderRight: i < 3 ? '1px solid #1f1f1f' : 'none',
-                opacity: stat.fadeOnly ? (statsInView ? 1 : 0) : 1,
-                transform: stat.fadeOnly ? (statsInView ? 'translateY(0)' : 'translateY(10px)') : 'none',
-                transition: stat.fadeOnly ? 'opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s' : 'none',
-              }}
-            >
-              {/* Value */}
-              <div
-                style={{
-                  fontSize: '36px',
-                  fontFamily: 'Geist Mono, monospace',
-                  fontWeight: 700,
-                  color: '#fafafa',
-                  lineHeight: 1.2,
-                }}
-              >
-                {stat.val}
-              </div>
-              
-              {/* Label */}
-              <div
-                style={{
-                  fontSize: '10px',
-                  color: '#3d3d3d',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  marginTop: '6px',
-                }}
-              >
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA SECTION */}
-      <section
-        ref={ctaRef}
-        style={{
-          backgroundColor: '#080808',
-          borderTop: '1px solid #1f1f1f',
-          padding: '96px 24px',
-          textAlign: 'center',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '520px',
-            margin: '0 auto',
-            opacity: ctaInView ? 1 : 0,
-            transform: ctaInView ? 'translateY(0)' : 'translateY(10px)',
-            transition: 'opacity 0.5s ease, transform 0.5s ease',
-          }}
-        >
-          {/* Heading */}
-          <h2
-            style={{
-              fontSize: '32px',
-              fontWeight: 700,
-              letterSpacing: '-0.03em',
-              color: '#fafafa',
-              margin: 0,
-            }}
-          >
-            Start managing smarter today.
-          </h2>
-          
-          {/* Subtext */}
-          <p
-            style={{
-              fontSize: '14px',
-              color: '#717171',
-              marginTop: '12px',
-              marginBottom: 0,
-            }}
-          >
-            Join thousands of service centers already on AutoServe.
-          </p>
-
-          {/* Button */}
-          <Link
-            to="/register"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginTop: '28px',
-              backgroundColor: '#f97316',
-              color: '#000000',
-              fontWeight: 600,
-              fontSize: '13px',
-              padding: '10px 20px',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              filter: ctaHovered ? 'brightness(1.1)' : 'brightness(1)',
-              transition: 'filter 0.15s ease',
-            }}
-            onMouseEnter={() => setCtaHovered(true)}
-            onMouseLeave={() => setCtaHovered(false)}
-          >
-            Create free account &rarr;
-          </Link>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer
-        style={{
-          borderTop: '1px solid #1f1f1f',
+      {/* Footer */}
+      <footer>
+        <div style={{
+          maxWidth: '1320px', margin: '0 auto',
           padding: '24px',
-          backgroundColor: '#080808',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '960px',
-            margin: '0 auto',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          {/* Left: Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Wrench size={14} color="#f97316" />
-            <span
-              style={{
-                fontSize: '13px',
-                fontWeight: 600,
-                color: '#fafafa',
-                letterSpacing: '-0.03em',
-              }}
-            >
-              AutoServe
-            </span>
-          </div>
-
-          {/* Right: Copyright */}
-          <div style={{ fontSize: '11px', color: '#3d3d3d' }}>
-            &copy; 2026 AutoServe
-          </div>
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          fontFamily: 'Geist Mono, monospace', fontSize: '11px',
+          color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em',
+        }}>
+          <span>© 2026 AutoServe Systems</span>
+          <span>San Francisco · Berlin · Singapore</span>
         </div>
       </footer>
-
     </div>
   );
 }

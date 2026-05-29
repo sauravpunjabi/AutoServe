@@ -147,17 +147,17 @@ export default function ManagerBookings() {
                     <td style={{ ...tdStyle, color: 'var(--text-secondary)' }}>
                       {b.time_slot?.slice?.(0, 5) || b.time_slot}
                     </td>
-                    <td style={{ ...tdStyle, fontFamily: 'DM Mono, monospace', fontSize: '12px' }}>
+                    <td style={{ ...tdStyle, fontFamily: 'Geist Mono, monospace', fontSize: '12px' }}>
                       {b.make} {b.model}
                     </td>
                     <td style={tdStyle}>
-                      <span style={{ fontSize: '12px', color: '#fafafa' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>
                         {b.services?.[0]?.name || b.service_type || 'N/A'}
                       </span>
                       {(b.services?.length || 0) > 1 && (
-                        <span style={{ 
+                        <span style={{
                           marginLeft: '6px', fontSize: '10px',
-                          color: '#f97316', fontWeight: 500 
+                          color: 'var(--accent)', fontWeight: 500
                         }}>+{b.services.length - 1} more</span>
                       )}
                     </td>

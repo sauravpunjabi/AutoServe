@@ -139,7 +139,7 @@ export default function ManagerBookingDetail() {
                         }}
                       >
                         <span>{s.name}</span>
-                        <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                        <span style={{ fontFamily: 'Geist Mono, monospace' }}>
                           ₹{Number(s.price).toLocaleString()}
                         </span>
                       </div>
@@ -157,7 +157,7 @@ export default function ManagerBookingDetail() {
                       }}
                     >
                       <span>Subtotal</span>
-                      <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                      <span style={{ fontFamily: 'Geist Mono, monospace' }}>
                         ₹{Number(booking.services_total || 0).toLocaleString()}
                       </span>
                     </div>

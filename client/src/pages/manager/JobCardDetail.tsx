@@ -226,7 +226,7 @@ export default function ManagerJobCardDetail() {
                       }}
                     >
                       <span>{s.name}</span>
-                      <span style={{ fontFamily: 'DM Mono, monospace' }}>
+                      <span style={{ fontFamily: 'Geist Mono, monospace' }}>
                         ₹{Number(s.price).toLocaleString()}
                       </span>
                     </div>

@@ -85,7 +85,7 @@ function RevenueChart({ data }: { data: { name: string; revenue: number }[] }) {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
               <XAxis dataKey="name" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickFormatter={(v) => `$${v}`} axisLine={false} tickLine={false} />
-              <RechartsTooltip contentStyle={chartTooltipStyle} cursor={{ fill: 'rgba(249,115,22,0.04)' }} />
+              <RechartsTooltip contentStyle={chartTooltipStyle} cursor={{ fill: 'rgba(16,185,129,0.04)' }} />
               <Bar dataKey="revenue" fill="var(--accent)" radius={[3, 3, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -108,7 +108,7 @@ function BookingsChart({ data }: { data: { name: string; bookings: number }[] })
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data}>
               <defs>
-                <linearGradient id="orangeGradient" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="tealGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.2} />
                   <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
                 </linearGradient>
@@ -116,8 +116,8 @@ function BookingsChart({ data }: { data: { name: string; bookings: number }[] })
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
               <XAxis dataKey="name" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <RechartsTooltip contentStyle={chartTooltipStyle} cursor={{ stroke: 'rgba(249,115,22,0.1)', strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="bookings" stroke="var(--accent)" fill="url(#orangeGradient)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--accent)', strokeWidth: 0 }} />
+              <RechartsTooltip contentStyle={chartTooltipStyle} cursor={{ stroke: 'rgba(16,185,129,0.1)', strokeWidth: 1 }} />
+              <Area type="monotone" dataKey="bookings" stroke="var(--accent)" fill="url(#tealGradient)" strokeWidth={2} dot={false} activeDot={{ r: 4, fill: 'var(--accent)', strokeWidth: 0 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

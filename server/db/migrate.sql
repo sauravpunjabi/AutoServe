@@ -34,3 +34,6 @@ ON CONFLICT DO NOTHING;
 CREATE INDEX IF NOT EXISTS idx_booking_services_booking_id ON booking_services(booking_id);
 
 ALTER TABLE invoices ADD COLUMN IF NOT EXISTS services_total DECIMAL(10,2) DEFAULT 0;
+
+-- Vehicle photo support
+ALTER TABLE vehicles ADD COLUMN IF NOT EXISTS photo_url TEXT;

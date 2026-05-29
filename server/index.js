@@ -46,10 +46,17 @@ app.use(helmet());
 
 app.use(cors(corsOptions));
 
+// ─── Static uploads (vehicle photos, etc.) ───────────────────────────────────
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // ─── Body-size cap (OWASP A04 / DoS) ─────────────────────────────────────────
-// Express default is 100 kB; 16 kB is plenty for every endpoint in this app.
-// Rejects oversized payloads before any route handler runs.
-app.use(express.json({ limit: "16kb" }));
+// Vehicle photo uploads are base64-encoded images — allow up to 5 MB for that
+// one endpoint. Everything else stays at 16 kB.
+app.use((req, res, next) => {
+  const isPhotoUpload =
+    req.method === "PATCH" && /^\/api\/vehicles\/[^/]+\/photo$/.test(req.path);
+  express.json({ limit: isPhotoUpload ? "5mb" : "16kb" })(req, res, next);
+});
 
 // ─── Global rate limiter (OWASP A04 / DoS) ───────────────────────────────────
 // 300 requests / 15 min per IP across all /api routes.

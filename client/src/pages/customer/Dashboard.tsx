@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axios';
+
+const SERVER_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '');
 import { useAuth } from '../../context/AuthContext';
 import AppLayout from '../../components/AppLayout';
 import { customerNav } from '../../lib/nav';
@@ -18,7 +20,7 @@ import {
   SecondaryButton,
   CapacityBar,
 } from '../../components/ui';
-import { Car, Clock, Check, ChevronRight, CreditCard, Download, CalendarPlus, FileText, Zap, AlertCircle } from 'lucide-react';
+import { Car, Clock, Check, ChevronRight, CreditCard, Download, CalendarPlus, FileText, AlertCircle } from 'lucide-react';
 
 function fmtMoney(n: number) {
   return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -145,7 +147,7 @@ function ActiveJobHero({ job, onPay }: { job: any; onPay: () => void }) {
                     position: 'absolute', left: 0, top: 2,
                     width: 16, height: 16, borderRadius: '50%',
                     border: `1px solid ${done ? 'var(--accent)' : inProg ? 'var(--info)' : 'var(--border-strong)'}`,
-                    background: done ? 'rgba(249,115,22,0.1)' : inProg ? 'rgba(59,130,246,0.1)' : 'var(--bg-elevated)',
+                    background: done ? 'rgba(16,185,129,0.1)' : inProg ? 'rgba(59,130,246,0.1)' : 'var(--bg-elevated)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {statusIcon(t.status)}
@@ -216,20 +218,17 @@ function VehicleGarage({ vehicles, onBook }: { vehicles: any[]; onBook: () => vo
                   {v.license_plate}
                 </Mono>
               </div>
-              <div style={{ height: 64, border: '1px solid var(--border)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', marginBottom: 16 }}>
-                <Zap size={24} color="var(--text-muted)" strokeWidth={1.5} />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>Odometer</p>
-                  <Mono style={{ fontSize: 13, color: 'var(--text-primary)', marginTop: 2 }}>
-                    {v.mileage ? `${Number(v.mileage).toLocaleString()} mi` : '—'}
-                  </Mono>
-                </div>
-                <div>
-                  <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>Color</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-primary)' }}>{v.color || '—'}</p>
-                </div>
+              {/* Vehicle photo */}
+              <div style={{
+                height: 96, borderRadius: 4, marginBottom: 16, overflow: 'hidden',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-elevated)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {v.photo_url
+                  ? <img src={`${SERVER_URL}${v.photo_url}`} alt={`${v.make} ${v.model}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : <Car size={24} color="var(--text-muted)" strokeWidth={1.5} />
+                }
               </div>
               <button
                 onClick={onBook}

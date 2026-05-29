@@ -180,7 +180,7 @@ function ActiveJobWorkspace({ job, onTaskUpdate }: { job: any; onTaskUpdate: (jo
                     <div style={{
                       width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
                       border: `1px solid ${done ? 'var(--accent)' : inProg ? 'var(--info)' : 'var(--border-strong)'}`,
-                      background: done ? 'rgba(249,115,22,0.1)' : inProg ? 'rgba(59,130,246,0.1)' : 'var(--bg-elevated)',
+                      background: done ? 'rgba(16,185,129,0.1)' : inProg ? 'rgba(59,130,246,0.1)' : 'var(--bg-elevated)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
                       {done && <Check size={12} color="var(--accent)" strokeWidth={2.5} />}

@@ -313,7 +313,7 @@ export default function CustomerJobTracker() {
                       }}
                     >
                       <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{s.name}</span>
-                      <span style={{ color: 'var(--accent)', fontFamily: 'DM Mono, monospace' }}>
+                      <span style={{ color: 'var(--accent)', fontFamily: 'Geist Mono, monospace' }}>
                         ₹{Number(s.price).toLocaleString()}
                       </span>
                     </li>

@@ -21,32 +21,33 @@ export default function EmptyState({
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '48px 24px',
-      border: '1px dashed #1f1f1f',
-      borderRadius: '10px',
+      padding: '56px 24px',
       textAlign: 'center',
       width: '100%',
     }}>
-      <Icon size={20} color="#3d3d3d" strokeWidth={1.5} />
-      <p style={{ 
-        margin: '12px 0 4px', 
-        fontSize: '13px', 
-        fontWeight: 500,
-        color: 'var(--text-primary)'
+      <div style={{
+        width: '48px',
+        height: '48px',
+        border: '1px solid var(--border-strong)',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-secondary)',
+        marginBottom: '16px',
       }}>
+        <Icon size={20} strokeWidth={1.5} />
+      </div>
+      <p style={{ margin: '0 0 6px', fontSize: '14px', fontWeight: 500, color: 'var(--text-primary)' }}>
         {title}
       </p>
       {description && (
-        <p style={{ 
-          margin: 0, 
-          fontSize: '12px', 
-          color: 'var(--text-secondary)' 
-        }}>
+        <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '360px' }}>
           {description}
         </p>
       )}
       {actionLabel && (actionTo || onAction) && (
-        <div style={{ marginTop: '16px' }}>
+        <div style={{ marginTop: '20px' }}>
           {actionTo ? (
             <Link
               to={actionTo}
@@ -54,18 +55,24 @@ export default function EmptyState({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '32px',
-                padding: '0 14px',
+                height: '36px',
+                padding: '0 16px',
                 backgroundColor: 'var(--accent)',
-                color: '#000',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
+                color: '#0B0E14',
+                borderRadius: '2px',
+                border: '1px solid var(--accent)',
+                fontSize: '13px',
+                fontWeight: 500,
                 textDecoration: 'none',
-                transition: 'filter 0.15s ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(1)'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--accent)';
+                e.currentTarget.style.borderColor = 'var(--accent)';
+              }}
             >
               {actionLabel}
             </Link>
@@ -77,19 +84,24 @@ export default function EmptyState({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                height: '32px',
-                padding: '0 14px',
+                height: '36px',
+                padding: '0 16px',
                 backgroundColor: 'var(--accent)',
-                color: '#000',
-                borderRadius: '6px',
-                fontSize: '12px',
-                fontWeight: 600,
-                border: 'none',
+                color: '#0B0E14',
+                borderRadius: '2px',
+                border: '1px solid var(--accent)',
+                fontSize: '13px',
+                fontWeight: 500,
                 cursor: 'pointer',
-                transition: 'filter 0.15s ease',
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(1)'; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--text-primary)';
+                e.currentTarget.style.borderColor = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--accent)';
+                e.currentTarget.style.borderColor = 'var(--accent)';
+              }}
             >
               {actionLabel}
             </button>

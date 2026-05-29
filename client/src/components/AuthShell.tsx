@@ -2,113 +2,148 @@ import { ReactNode } from 'react';
 
 export function AuthBrandPanel({ children }: { children?: ReactNode }) {
   return (
-    <div
-      style={{
-        width: '40%',
-        minWidth: '300px',
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '48px',
-        backgroundColor: 'var(--bg-card)',
-        borderRight: '1px solid var(--border)',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Orange glow orb */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '20%',
-          left: '10%',
-          width: '280px',
-          height: '280px',
-          background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.08) 0%, transparent 70%)',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-        }}
-      />
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '15%',
-          right: '-15%',
-          width: '200px',
-          height: '200px',
-          background: 'radial-gradient(ellipse at center, rgba(249,115,22,0.05) 0%, transparent 70%)',
-          borderRadius: '50%',
-          pointerEvents: 'none',
-        }}
-      />
+    <aside style={{
+      width: '44%',
+      minWidth: '340px',
+      flexShrink: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: '48px',
+      backgroundColor: 'var(--bg-card)',
+      borderRight: '1px solid var(--border)',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Grid background */}
+      <div className="grid-bg" style={{
+        position: 'absolute',
+        inset: 0,
+        opacity: 0.6,
+        pointerEvents: 'none',
+      }} />
+      {/* Gradient overlay */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'linear-gradient(to bottom right, transparent 40%, rgba(11,14,20,0.85))',
+        pointerEvents: 'none',
+      }} />
 
       {/* Logo */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', position: 'relative' }}>
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-        </svg>
-        <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
-          AutoServe
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 1 }}>
+        <div style={{
+          width: '36px',
+          height: '36px',
+          border: '1px solid rgba(16,185,129,0.7)',
+          borderRadius: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <span style={{ display: 'block', width: '12px', height: '12px', backgroundColor: '#10B981', borderRadius: '1px' }} />
+        </div>
+        <div>
+          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>AutoServe</div>
+          <div style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', letterSpacing: '0.18em', color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+            Workshop OS
+          </div>
+        </div>
       </div>
 
+      {/* Main content */}
       {children ?? (
-        <>
-          <div style={{ position: 'relative' }}>
-            <h1
-              style={{
-                fontSize: '28px',
-                fontWeight: 700,
-                color: 'var(--text-primary)',
-                margin: '0 0 12px',
-                letterSpacing: '-0.03em',
-                lineHeight: 1.2,
-              }}
-            >
-              Vehicle service,{' '}
-              <span style={{ color: 'var(--accent)' }}>simplified.</span>
-            </h1>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7, maxWidth: '300px' }}>
-              Book maintenance, track jobs in real time, and manage your service center — all in one place.
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{
+              fontFamily: 'Geist Mono, monospace',
+              fontSize: '10px',
+              letterSpacing: '0.18em',
+              color: 'var(--accent)',
+              textTransform: 'uppercase',
+              marginBottom: '12px',
+            }}>
+              v4.2 · live
+            </div>
+            <h2 style={{
+              fontSize: '38px',
+              lineHeight: 1.05,
+              fontWeight: 500,
+              letterSpacing: '-0.03em',
+              color: 'var(--text-primary)',
+              margin: '0 0 16px',
+            }}>
+              The operating layer<br />for modern service bays.
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.7, maxWidth: '340px' }}>
+              Live job telemetry, parts inventory, mechanic capacity, customer billing — all on one terminal. No spreadsheets, no clipboards.
             </p>
           </div>
-          <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0, position: 'relative' }}>
-            © {new Date().getFullYear()} AutoServe
-          </p>
-        </>
+
+          {/* Stats grid */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            border: '1px solid var(--border-strong)',
+            borderRadius: '6px',
+            overflow: 'hidden',
+            maxWidth: '360px',
+          }}>
+            {[
+              { label: 'Centers', value: '142' },
+              { label: 'Jobs/day', value: '8,210' },
+              { label: 'SLA', value: '97.4%', accent: true },
+            ].map((stat, i) => (
+              <div key={stat.label} style={{
+                padding: '12px 16px',
+                borderRight: i < 2 ? '1px solid var(--border)' : 'none',
+              }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
+                  {stat.label}
+                </div>
+                <div style={{
+                  fontFamily: 'Geist Mono, monospace',
+                  fontSize: '18px',
+                  color: stat.accent ? 'var(--accent)' : 'var(--text-primary)',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                  {stat.value}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
-    </div>
+
+      {/* Footer */}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        fontFamily: 'Geist Mono, monospace',
+        fontSize: '10px',
+        color: 'var(--text-muted)',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+      }}>
+        © 2026 AutoServe Systems · SOC 2 Type II
+      </div>
+    </aside>
   );
 }
 
 export function AuthFormPanel({ children }: { children: ReactNode }) {
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '48px 32px',
-        backgroundColor: 'var(--bg)',
-      }}
-    >
-      <div
-        className="animate-fade-in-up"
-        style={{ width: '100%', maxWidth: '360px' }}
-      >
+    <main style={{
+      flex: 1,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '40px 32px',
+      backgroundColor: 'var(--bg)',
+    }}>
+      <div className="animate-fade-in-up" style={{ width: '100%', maxWidth: '400px' }}>
         {children}
       </div>
-    </div>
+    </main>
   );
 }

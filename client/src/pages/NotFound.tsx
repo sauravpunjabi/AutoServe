@@ -10,15 +10,15 @@ export default function NotFound() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#080808',
-        color: '#fafafa',
+        backgroundColor: 'var(--bg)',
+        color: 'var(--text-primary)',
         padding: '24px',
         textAlign: 'center',
         fontFamily: 'Geist, sans-serif',
         animation: 'fadeInUp 0.25s ease forwards',
       }}
     >
-      <AlertTriangle size={32} color="#f97316" style={{ marginBottom: '16px' }} />
+      <AlertTriangle size={32} color="var(--accent)" style={{ marginBottom: '16px' }} />
       <h1
         style={{
           fontSize: '28px',
@@ -32,7 +32,7 @@ export default function NotFound() {
       <p
         style={{
           fontSize: '13px',
-          color: '#717171',
+          color: 'var(--text-secondary)',
           maxWidth: '360px',
           lineHeight: 1.6,
           margin: '0 0 24px 0',
@@ -50,14 +50,21 @@ export default function NotFound() {
           padding: '0 20px',
           fontSize: '12px',
           fontWeight: 600,
-          color: '#080808',
-          backgroundColor: '#f97316',
-          borderRadius: '6px',
+          color: 'var(--bg)',
+          backgroundColor: 'var(--accent)',
+          borderRadius: 'var(--radius)',
           textDecoration: 'none',
-          transition: 'filter 0.15s ease',
+          transition: 'background 0.15s ease',
+          border: '1px solid var(--accent)',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.08)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.filter = 'brightness(1)'; }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = '#fff';
+          e.currentTarget.style.color = 'var(--bg)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--accent)';
+          e.currentTarget.style.color = 'var(--bg)';
+        }}
       >
         Go to home
       </Link>

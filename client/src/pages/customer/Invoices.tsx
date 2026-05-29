@@ -292,7 +292,7 @@ function PaymentModal({
             }}
           >
             <span style={{ color: 'var(--text-primary)' }}>Total</span>
-            <span style={{ color: 'var(--text-primary)', fontFamily: 'DM Mono, monospace' }}>
+            <span style={{ color: 'var(--text-primary)', fontFamily: 'Geist Mono, monospace' }}>
               ${Number(inv.total_amount).toFixed(2)}
             </span>
           </div>
@@ -308,7 +308,7 @@ function PaymentModal({
               placeholder="1234 5678 9012 3456"
               value={cardNumber}
               onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-              style={{ fontFamily: 'DM Mono, monospace', letterSpacing: '0.05em' }}
+              style={{ fontFamily: 'Geist Mono, monospace', letterSpacing: '0.05em' }}
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -320,7 +320,7 @@ function PaymentModal({
                 placeholder="MM/YY"
                 value={expiry}
                 onChange={(e) => setExpiry(formatExpiry(e.target.value))}
-                style={{ fontFamily: 'DM Mono, monospace' }}
+                style={{ fontFamily: 'Geist Mono, monospace' }}
               />
             </div>
             <div>
@@ -332,7 +332,7 @@ function PaymentModal({
                 value={cvv}
                 onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 type="password"
-                style={{ fontFamily: 'DM Mono, monospace' }}
+                style={{ fontFamily: 'Geist Mono, monospace' }}
               />
             </div>
           </div>
@@ -489,7 +489,7 @@ export default function CustomerInvoices() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>Total amount</span>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'DM Mono, monospace' }}>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 500, fontFamily: 'Geist Mono, monospace' }}>
                       ${Number(inv.total_amount).toFixed(2)}
                     </span>
                   </div>
