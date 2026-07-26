@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: autoserve-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      # Secrets are set in the Render dashboard, never committed here.
+      # sync:false tells Render to prompt for them instead of expecting a value.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false

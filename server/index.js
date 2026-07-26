@@ -72,6 +72,14 @@ app.use((req, res, next) => {
 // ─── Global rate limiter (OWASP A04 / DoS) ───────────────────────────────────
 // 300 requests / 15 min per IP across all /api routes.
 // Per-endpoint limiters in each router further tighten specific surfaces.
+// ─── Health check ────────────────────────────────────────────────────────────
+// Registered ahead of the rate limiter — the host probes this continuously and
+// must not eat into the per-IP budget. Also handy for confirming from outside
+// that a deploy is actually live (vs. the platform's own 404 page).
+app.get("/api/health", (_req, res) => {
+  res.json({ success: true, status: "ok", uptime: process.uptime() });
+});
+
 app.use("/api", apiLimiter);
 
 app.use("/api/auth", require("./routes/auth"));
