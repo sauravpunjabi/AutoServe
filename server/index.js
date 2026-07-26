@@ -18,16 +18,27 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// Origins are compared exactly, so normalise away trailing slashes and case —
+// "https://app.example.com/" and the browser's Origin header must still match.
+const normaliseOrigin = (o) => o.trim().replace(/\/+$/, "").toLowerCase();
+
 const allowedOrigins = [
   "http://localhost:5173",
-  ...(process.env.CLIENT_URL
-    ? process.env.CLIENT_URL.split(",").map((o) => o.trim())
-    : []),
+  ...[process.env.CLIENT_URL, process.env.FRONTEND_URL]
+    .filter(Boolean)
+    .flatMap((v) => v.split(","))
+    .map(normaliseOrigin)
+    .filter(Boolean),
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    if (!origin || allowedOrigins.includes(normaliseOrigin(origin))) {
+      return callback(null, true);
+    }
+    console.warn(
+      `CORS: rejected origin "${origin}" — allowed: ${allowedOrigins.join(", ")}`
+    );
     callback(new Error("Not allowed by CORS"));
   },
   credentials: true,
